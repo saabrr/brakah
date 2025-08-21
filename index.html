@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Barakahs — Studio</title>
+  <meta name="description" content="Barakahs — We build clean sites, manage Roblox groups, and handle money exchange." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Outfit:wght@600;800;900&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      /* Ocean palette */
+      --bg-0:#03141c; --bg-1:#062535; /* deep water */
+      --fg-0:#e8fbff; --fg-dim:#a8c7d4;
+      --aqua-1:#3ddad7; --aqua-2:#7ff0e5; /* primary */
+      --sea-foam:#9fecea; --sand:#ffd89c; /* accents */
+      --shadow:0 8px 32px rgba(0,0,0,.35);
+      --radius-xl:22px; --radius-lg:16px; --radius-md:12px;
+      --maxw:1120px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:'Baloo 2', Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+      color:var(--fg-0);
+      overflow-x:hidden;
+    }
+
+    /* Ocean background canvas */
+    #bgCanvas{position:fixed;inset:0;z-index:0;opacity:.95;background:linear-gradient(180deg,#03141c 0%,#062535 100%)}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:10px;height:10px}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--aqua-1),var(--sand));border-radius:10px}
+    ::-webkit-scrollbar-track{background:#071a24}
+
+    /* Top progress */
+    .scroll-progress{position:fixed;left:0;top:0;height:3px;width:0%;z-index:999;background:linear-gradient(90deg,var(--aqua-2),var(--sand));box-shadow:0 0 8px rgba(61,218,215,.6),0 0 12px rgba(255,216,156,.4)}
+
+    /* Layout */
+    main{position:relative;z-index:1}
+    section{padding:96px 24px}
+    .container{max-width:var(--maxw);margin:0 auto}
+
+    /* Nav */
+    .navbar{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:min(980px,92vw);z-index:9980;transition:.35s ease transform,.35s ease opacity}
+    .nav-wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 14px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-family:Outfit,Inter}
+    .brand-mark{width:32px;height:32px;border-radius:10px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
+    .brand-mark::before{content:"";position:absolute;inset:-60% -60% auto auto;background:conic-gradient(var(--aqua-1),var(--sand),var(--aqua-2));filter:blur(8px)}
+    .nav-links{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .nav-links a{color:var(--fg-0);text-decoration:none;padding:10px 14px;border-radius:999px;font-weight:600;font-size:14px;opacity:.95}
+    .nav-links a:hover{background:rgba(255,255,255,.08)}
+    .cta{display:inline-grid;place-items:center;padding:12px 18px;border-radius:999px;font-weight:800;text-decoration:none;color:#062535;background:linear-gradient(90deg,var(--aqua-2),var(--sand)); box-shadow:0 8px 30px rgba(127,240,229,.25)}
+    .nav-hidden{transform:translate(-50%, -130%);opacity:0}
+    .hamburger{display:none}
+    @media (max-width: 760px){.hamburger{display:block}.nav-links{display:none}.nav-wrap{padding:10px 12px}}
+    .drawer{position:fixed;inset:70px 14px auto 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:12px;display:none;backdrop-filter:blur(14px);z-index:9970}
+    .drawer a{display:block;padding:12px 10px;border-radius:12px;text-decoration:none;color:var(--fg-0);font-weight:600}
+    .drawer a:hover{background:rgba(255,255,255,.08)}
+
+    /* Hero */
+    .hero{min-height:96vh;display:grid;place-items:center}
+    .hero-inner{display:grid;gap:20px;text-align:center;max-width:880px;margin:0 auto}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;font-weight:700;font-size:12px;background:rgba(61,218,215,.18);border:1px solid rgba(255,255,255,.18);color:#dffdfc}
+    .h1{font-family:Outfit, Inter;font-weight:900;font-size:clamp(36px,6vw,64px);line-height:1.02}
+    .gradient-text{background:linear-gradient(90deg,var(--aqua-2),var(--sand));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .sub{color:var(--fg-dim);font-size:clamp(15px,2.3vw,18px)}
+    .slogan{display:inline-flex;align-items:center;gap:10px;margin:2px auto 0;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));box-shadow:var(--shadow);font-family:'Baloo 2', Outfit, Inter;font-weight:700}
+    .slogan .sticker{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:12px;background: radial-gradient(80px 80px at 30% 20%, rgba(61,218,215,.35), rgba(255,216,156,.25));border:1px solid rgba(255,255,255,.18);animation:wobble 2.2s ease-in-out infinite}
+    @keyframes wobble{0%,100%{transform:rotate(0deg) translateY(0)}25%{transform:rotate(-6deg) translateY(-1px)}50%{transform:rotate(0deg) translateY(-2px)}75%{transform:rotate(6deg) translateY(-1px)}}
+    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+    .btn{display:inline-grid;place-items:center;padding:14px 18px;border-radius:14px;text-decoration:none;font-weight:800;border:1px solid rgba(255,255,255,.14);color:var(--fg-0);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));box-shadow:var(--shadow);transition:.2s ease transform}
+    .btn:hover{transform:translateY(-2px)}
+    .btn.primary{color:#062535;background:linear-gradient(90deg,var(--aqua-2),var(--sand));border-color:transparent}
+
+    /* Section headers */
+    .section-head{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:0 auto 24px;max-width:var(--maxw);text-align:center}
+    .title{font-family:Outfit, Inter;font-weight:900;letter-spacing:.4px;font-size:clamp(24px, 3vw, 40px)}
+    .muted{color:var(--fg-dim)}
+
+    /* Grids */
+    .grid{display:grid;gap:18px}
+    .grid-4{grid-template-columns: repeat(4, 1fr)}
+    .grid-3{grid-template-columns: repeat(3, 1fr)}
+    .grid-2{grid-template-columns: repeat(2, 1fr)}
+    @media (max-width: 1080px){ .grid-4{grid-template-columns:1fr 1fr 1fr} }
+    @media (max-width: 980px){ .grid-3{grid-template-columns:1fr 1fr} }
+    @media (max-width: 640px){ .grid-2, .grid-3, .grid-4{grid-template-columns:1fr} }
+
+    /* Cards */
+    .card{background:rgba(255,255,255,.06);border:2px solid var(--aqua-1);border-radius:20px;padding:18px;box-shadow:var(--shadow);transition:.2s}
+    .card:hover{transform:translateY(-3px);border-color:var(--sand)}
+
+    /* About / Services */
+    .about .stat{display:flex;align-items:center;gap:10px}
+    .bubble{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(61,218,215,.25), rgba(255,216,156,.18));border:1px solid rgba(255,255,255,.14)}
+    .kpi{font:900 26px/1 Outfit}
+    .service{display:grid;gap:8px}
+    .service h4{margin:0;font:800 18px/1.2 Inter}
+    .service p{margin:0;color:var(--fg-dim)}
+
+    /* Groups */
+    .group{display:grid; grid-template-columns: 72px 1fr; gap:12px; align-items:center}
+    .group img{width:72px;height:72px;border-radius:16px;border:2px solid var(--sand);background:#062535;object-fit:cover}
+    .g-title{font:800 18px/1.2 Outfit;margin:0;color:var(--fg-0)}
+    .g-meta{font:600 13px/1.2 Inter; color:var(--fg-dim)}
+
+    /* Reveal */
+    .reveal{opacity:0;transform:translateY(12px);transition:.5s ease}
+    .reveal.visible{opacity:1;transform:none}
+
+    /* Footer */
+    footer{padding:30px 24px;color:var(--fg-dim)}
+    .foot{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  </style>
+</head>
+<body>
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Loader -->
+  <div id="loader" aria-hidden="true" style="position:fixed;inset:0;display:grid;place-items:center;z-index:9999;background:radial-gradient(900px 600px at 50% -10%, rgba(61,218,215,.12), transparent 60%), #03141c;transition:opacity .6s ease .1s, visibility .6s ease .1s"><div class="loader-card" style="width:min(560px,92vw);padding:28px;border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);box-shadow:var(--shadow);text-align:center"><div class="logo-mark" style="width:84px;height:84px;margin:0 auto 12px;position:relative;filter:drop-shadow(0 8px 30px rgba(61,218,215,.35))"><div class="ring" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, var(--aqua-1), var(--sand), var(--aqua-2));-webkit-mask:radial-gradient(circle at 50% 50%, transparent 47%, black 48%);mask:radial-gradient(circle at 50% 50%, transparent 47%, black 48%);animation:spin 2.6s linear infinite"></div><div class="b" style="position:absolute;inset:18%;border-radius:22%;background:linear-gradient(135deg, #061a24 35%, rgba(61,218,215,.15));display:grid;place-items:center;font-family:Outfit, Inter;font-weight:900;font-size:40px;color:#eafffb;border:1px solid rgba(255,255,255,.12);text-shadow:0 2px 16px rgba(61,218,215,.35)">B</div></div><div class="loader-title" style="font:800 26px/1 Outfit, Inter;letter-spacing:.5px;margin:6px 0 4px">Barakahs</div><div class="loader-sub" style="color:var(--fg-dim);font-size:14px;margin-bottom:14px">Clean builds. Simple process.</div><div class="progress" aria-label="Loading" style="height:10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative"><span style="content:'';position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--aqua-2),var(--sand));box-shadow:inset 0 0 20px rgba(255,255,255,.2),0 0 20px rgba(255,216,156,.5);animation:load 2.8s ease forwards"></span></div></div></div>
+
+  <!-- Nav -->
+  <nav class="navbar nav-hidden" id="nav">
+    <div class="nav-wrap">
+      <div class="brand"><div class="brand-mark"></div><span>Barakahs</span></div>
+      <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#groups">Groups</a>
+        <a href="#join">Join</a>
+        <a class="cta" href="https://discord.gg/NUJ85YXq3Y" target="_blank" rel="noopener">Discord</a>
+      </div>
+      <a class="btn hamburger" id="openDrawer" href="#">Menu</a>
+    </div>
+  </nav>
+  <div class="drawer" id="drawer">
+    <a href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#services">Services</a>
+    <a href="#groups">Groups</a>
+    <a href="#join">Join</a>
+    <a href="https://discord.gg/NUJ85YXq3Y" target="_blank" rel="noopener">Discord</a>
+  </div>
+
+  <!-- Background -->
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+  <main>
+    <!-- Hero -->
+    <section id="home" class="hero">
+      <div class="container hero-inner reveal">
+        <div class="badge">🌊 Welcome to <strong>Barakahs</strong></div>
+        <h1 class="h1">We build sites, manage groups, and exchange money — <span class="gradient-text">done right</span>.</h1>
+        <p class="sub">We keep things clear and stable.</p>
+        <div class="slogan"><div class="sticker">💱</div><span>We exchange — we will turn your money into <span class="gradient-text">what you need</span>, fast.</span></div>
+        <div class="actions">
+          <span class="magnet"><a class="btn primary" href="#groups">Our Groups</a></span>
+          <span class="magnet"><a class="btn" href="#services">Services</a></span>
+          <span class="magnet"><a class="btn" href="#join">Join Discord</a></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="about">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">About</div>
+            <h2 class="title">Simple, neat, and reliable</h2>
+            <p class="muted">We mix design and engineering. Our work is easy to use and easy to keep running.</p>
+          </div>
+        </div>
+        <div class="grid grid-3">
+          <div class="card reveal tilt">
+            <div class="stat"><div class="bubble">📈</div><div>
+              <div class="kpi" data-countto="98">0</div>
+              <div class="muted">Client score</div>
+            </div></div>
+            <p class="muted">Clear layouts, quick load, and strong structure.</p>
+          </div>
+          <div class="card reveal tilt">
+            <div class="stat"><div class="bubble">🛡️</div><div>
+              <div class="kpi" data-countto="24">0</div>
+              <div class="muted">Groups under care</div>
+            </div></div>
+            <p class="muted">We set schedules, guides, and dashboards that work.</p>
+          </div>
+          <div class="card reveal tilt">
+            <div class="stat"><div class="bubble">⚡</div><div>
+              <div class="kpi" data-countto="120">0</div>
+              <div class="muted">Projects shipped</div>
+            </div></div>
+            <p class="muted">We deliver fast without cutting quality.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section id="services">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">Services</div>
+            <h2 class="title">What we do</h2>
+          </div>
+        </div>
+        <div class="grid grid-3">
+          <div class="card service tilt reveal">
+            <div class="bubble">🎨</div>
+            <h4>Web Design</h4>
+            <p>Clean UI, smooth motion, mobile ready.</p>
+          </div>
+          <div class="card service tilt reveal">
+            <div class="bubble">🧭</div>
+            <h4>Group Management</h4>
+            <p>Ranks, sessions, forms, and rules that are easy to follow.</p>
+          </div>
+          <div class="card service tilt reveal">
+            <div class="bubble">🤖</div>
+            <h4>Automation</h4>
+            <p>Discord bots and webhooks to keep data in sync.</p>
+          </div>
+          <div class="card service tilt reveal">
+            <div class="bubble">💎</div>
+            <h4>Brand Setup</h4>
+            <p>Logos and simple design systems that feel premium.</p>
+          </div>
+          <div class="card service tilt reveal">
+            <div class="bubble">🔐</div>
+            <h4>Quality</h4>
+            <p>We check access, speed, and bugs before launch.</p>
+          </div>
+          <div class="card service tilt reveal">
+            <div class="bubble">💱</div>
+            <h4>Money Exchange</h4>
+            <p>Tell us what you have and what you want. We handle it safely.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Groups -->
+    <section id="groups">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">Groups</div>
+            <h2 class="title">Groups we own</h2>
+            <p class="muted">Live member counts show below. Click to view on Roblox.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2" id="groupGrid">
+          <a class="card tilt reveal group-card" href="https://www.roblox.com/communities/35622107/Khalid-Games" target="_blank" rel="noopener" data-group-id="35622107">
+            <div class="group">
+              <img alt="Group icon" src="https://tr.rbxcdn.com/180DAY-a5f0e006fb27f69a7708133431116819/150/150/Image/Webp/noFilter" />
+              <div>
+                <h4 class="g-title">Khalid Games</h4>
+                <div class="g-meta">Join now →</div>
+              </div>
+            </div>
+          </a>
+          <a class="card tilt reveal group-card" href="https://www.roblox.com/communities/34264442/Tycoon-Games-3#!/about" target="_blank" rel="noopener" data-group-id="34264442">
+            <div class="group">
+              <img alt="Group icon" src="https://tr.rbxcdn.com/180DAY-a64bc9fe4ca94494c082166fb4ebbf08/150/150/Image/Webp/noFilter" />
+              <div>
+                <h4 class="g-title">Tycoon Games 3</h4>
+                <div class="g-meta">Join now →</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Join -->
+    <section id="join">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <div class="badge">Join</div>
+            <h2 class="title">Join our Discord</h2>
+            <p class="muted">Ask for a quote, talk about a build, or start an exchange.</p>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card reveal tilt">
+            <h3 style="margin:0 0 8px">Quick Join</h3>
+            <p class="muted" style="margin:0 0 12px">We reply fast. Use Discord for all requests.</p>
+            <div class="actions"><span class="magnet"><a class="btn primary" href="https://discord.gg/NUJ85YXq3Y" target="_blank" rel="noopener">Join Discord</a></span></div>
+          </div>
+          <div class="card reveal">
+            <h3 style="margin:0 0 8px">Why Discord</h3>
+            <ul class="muted" style="margin:0; padding-left:18px; line-height:1.65">
+              <li>Faster replies</li>
+              <li>Simple files and updates</li>
+              <li>Private channels for your project</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot"><div>© <span id="year"></span> Barakahs</div><div class="muted">Aqua × Sand energy</div></div>
+  </footer>
+
+  <script>
+  const $ = (q, scope=document) => scope.querySelector(q)
+  const $$ = (q, scope=document) => scope.querySelectorAll(q)
+
+  // Loader
+  const loader = $('#loader')
+  window.addEventListener('load', () => {
+    setTimeout(()=>{ loader.style.opacity='0'; loader.style.visibility='hidden'; $('#nav').classList.remove('nav-hidden') }, 900)
+  })
+
+  // Nav show/hide + progress
+  let lastY = window.scrollY
+  const nav = $('#nav')
+  function onScroll(){
+    const y = window.scrollY
+    if(y < 12){ nav.classList.remove('nav-hidden') }
+    else if(y > lastY){ nav.classList.add('nav-hidden') }
+    else { nav.classList.remove('nav-hidden') }
+    lastY = y
+    const docH = document.documentElement.scrollHeight - window.innerHeight
+    const pct = Math.max(0, Math.min(1, y / docH))
+    $('#scrollProgress').style.width = (pct * 100) + '%'
+  }
+  document.addEventListener('scroll', onScroll, {passive:true})
+
+  // Drawer
+  const drawer = $('#drawer')
+  $('#openDrawer')?.addEventListener('click', (e)=>{ e.preventDefault(); drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block' })
+  drawer.addEventListener('click', ()=> drawer.style.display='none')
+
+  // Reveal
+  const revealObs = new IntersectionObserver(entries=>{
+    entries.forEach(ent=>{ if(ent.isIntersecting){ ent.target.classList.add('visible'); revealObs.unobserve(ent.target) } })
+  }, {threshold:.2})
+  $$('.reveal').forEach(el=>revealObs.observe(el))
+
+  // Magnetic buttons
+  $$('.magnet').forEach(wrap => {
+    const a = wrap.querySelector('a')
+    wrap.addEventListener('mousemove', (e)=>{ const r = wrap.getBoundingClientRect(); const x=e.clientX-(r.left+r.width/2), y=e.clientY-(r.top+r.height/2); a.style.transform=`translate(${x*0.2}px, ${y*0.2}px)` })
+    wrap.addEventListener('mouseleave', ()=>{ a.style.transform='translate(0,0)' })
+  })
+
+  // Tilt cards
+  $$('.tilt').forEach(card => {
+    card.addEventListener('mousemove', (e)=>{ const r=card.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5; card.style.setProperty('--ry', `${x*9}deg`); card.style.setProperty('--rx', `${-y*9}deg`) })
+    card.addEventListener('mouseleave', ()=>{ card.style.setProperty('--ry','0deg'); card.style.setProperty('--rx','0deg') })
+  })
+
+  // Ocean background: waves, bubbles, light caustics
+  const canvas = $('#bgCanvas');
+  const ctx = canvas.getContext('2d', { alpha:true });
+  let W=0, H=0, bubbles=[], t=0;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; makeBubbles() }
+  window.addEventListener('resize', resize); resize();
+
+  function makeBubbles(){
+    bubbles=[];
+    for(let i=0;i<36;i++){
+      bubbles.push({x:Math.random()*W, y:H+Math.random()*H, r:4+Math.random()*10, s:.4+Math.random()*1.1, drift:(Math.random()-.5)*.4, hue:180+Math.random()*40})
+    }
+  }
+
+  function waveY(x, amp, freq, speed){ return Math.sin((x*freq + t*speed)) * amp }
+
+  ;(function loop(){
+    t += 0.016;
+    ctx.clearRect(0,0,W,H);
+
+    // Light caustics
+    ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){
+      const grad = ctx.createLinearGradient(0,0,W,H);
+      grad.addColorStop(0,`rgba(127,240,229,${0.04+i*0.02})`);
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=grad;
+      ctx.beginPath();
+      const y0 = H*0.2 + waveY(0, 12+i*6, .004+i*.0008, .8+i*.2);
+      ctx.moveTo(0,y0);
+      for(let x=0;x<=W;x+=24){ ctx.lineTo(x, H*0.2 + waveY(x, 12+i*6, .004+i*.0008, .8+i*.2)) }
+      ctx.lineTo(W,0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+
+    // Waves (two layers)
+    drawWave(H*0.72, 22, .006, 1.2, 'rgba(61,218,215,.12)');
+    drawWave(H*0.78, 28, .004, 0.9, 'rgba(61,218,215,.18)');
+
+    function drawWave(baseY, amp, freq, speed, fill){
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(0, baseY);
+      for(let x=0;x<=W;x+=12){ ctx.lineTo(x, baseY + waveY(x, amp, freq, speed)) }
+      ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
+    }
+
+    // Bubbles rising
+    for(const b of bubbles){
+      const grad = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*1.6);
+      grad.addColorStop(0,`hsla(${b.hue},80%,70%,.35)`);
+      grad.addColorStop(1,'hsla(0,0%,0%,0)');
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+      b.y -= b.s; b.x += Math.sin(t*1.2 + b.y*0.02)*0.4 + b.drift;
+      if(b.y < -10){ b.y = H+20; b.x = Math.random()*W }
+    }
+
+    requestAnimationFrame(loop)
+  })();
+
+  // Year
+  (function(){ const y = new Date().getFullYear(); const span=document.createElement('span'); span.textContent=y; document.querySelectorAll('#year').forEach(n=>n.textContent=y) })()
+
+  // Groups enhancement (icons + counts)
+  const groups = [
+    { id: 35622107, url: 'https://www.roblox.com/communities/35622107/Khalid-Games', title: 'Khalid Games' },
+    { id: 34264442, url: 'https://www.roblox.com/communities/34264442/Tycoon-Games-3#!/about', title: 'Tycoon Games 3' },
+  ]
+  async function getIcon(id){ try{ const r=await fetch(`https://thumbnails.roblox.com/v1/groups/icons?groupIds=${id}&size=150x150&format=Png&isCircular=true`); const j=await r.json(); return j?.data?.[0]?.imageUrl||'' }catch{ return '' } }
+  $$('.group-card').forEach(async card=>{
+    const id=card.getAttribute('data-group-id'); const titleEl=card.querySelector('.g-title'); const metaEl=card.querySelector('.g-meta'); const imgEl=card.querySelector('img');
+    try{ const [info, icon] = await Promise.all([ fetch(`https://groups.roblox.com/v1/groups/${id}`).then(r=>r.json()), getIcon(id) ]); if(icon) imgEl.src = icon; if(info?.name) titleEl.textContent = info.name; if(typeof info?.memberCount === 'number') metaEl.textContent = `Members: ${info.memberCount.toLocaleString()}` }catch{}
+  })
+  </script>
+</body>
+</html>
