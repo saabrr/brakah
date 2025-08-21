@@ -7,9 +7,36 @@
   <meta name="description" content="Barakahs — We build clean sites, manage Roblox groups, and handle money exchange." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Outfit:wght@600;800;900&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Barakahs — The #1 Exchanger + Dealer Team</title>
+  <meta name="description" content="Barakahs — We build clean sites, manage Roblox groups, and handle safe money exchange. Trusted by communities worldwide." />
+  <meta name="keywords" content="Barakahs, Roblox groups, money exchange, game development, group management, Discord bots, web design" />
+  <meta name="author" content="Barakahs Team" />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Barakahs — The #1 Exchanger + Dealer Team" />
+  <meta property="og:description" content="We build sites, manage Roblox groups, and handle safe money exchange. Done right, the Barakahs way." />
+  <meta property="og:image" content="https://barakahs.cc/iconforbara.png" />
+  <meta property="og:url" content="barakahs.cc" />
+  <meta property="og:site_name" content="Barakahs" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Barakahs — The #1 Exchanger + Dealer Team" />
+  <meta name="twitter:description" content="We build sites, manage Roblox groups, and handle safe money exchange. Done right, the Barakahs way." />
+  <meta name="twitter:image" content="https://barakahs.cc/iconforbara.png" />
+
+  <link rel="icon" href="iconforbara.png" type="image/png" />
+  <link rel="apple-touch-icon" href="iconforbara.png" />
+
+  <meta name="theme-color" content="#03141c" />
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Outfit:wght@600;800;900&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      /* Ocean palette */
       --bg-0:#03141c; --bg-1:#062535; /* deep water */
       --fg-0:#e8fbff; --fg-dim:#a8c7d4;
       --aqua-1:#3ddad7; --aqua-2:#7ff0e5; /* primary */
@@ -30,23 +57,22 @@
       overflow-x:hidden;
     }
 
-    /* Ocean background canvas */
     #bgCanvas{position:fixed;inset:0;z-index:0;opacity:.95;background:linear-gradient(180deg,#03141c 0%,#062535 100%)}
 
-    /* Scrollbar */
+
     ::-webkit-scrollbar{width:10px;height:10px}
     ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--aqua-1),var(--sand));border-radius:10px}
     ::-webkit-scrollbar-track{background:#071a24}
 
-    /* Top progress */
+
     .scroll-progress{position:fixed;left:0;top:0;height:3px;width:0%;z-index:999;background:linear-gradient(90deg,var(--aqua-2),var(--sand));box-shadow:0 0 8px rgba(61,218,215,.6),0 0 12px rgba(255,216,156,.4)}
 
-    /* Layout */
+
     main{position:relative;z-index:1}
     section{padding:96px 24px}
     .container{max-width:var(--maxw);margin:0 auto}
 
-    /* Nav */
+
     .navbar{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:min(980px,92vw);z-index:9980;transition:.35s ease transform,.35s ease opacity}
     .nav-wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 14px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-family:Outfit,Inter}
@@ -63,7 +89,7 @@
     .drawer a{display:block;padding:12px 10px;border-radius:12px;text-decoration:none;color:var(--fg-0);font-weight:600}
     .drawer a:hover{background:rgba(255,255,255,.08)}
 
-    /* Hero */
+
     .hero{min-height:96vh;display:grid;place-items:center}
     .hero-inner{display:grid;gap:20px;text-align:center;max-width:880px;margin:0 auto}
     .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;font-weight:700;font-size:12px;background:rgba(61,218,215,.18);border:1px solid rgba(255,255,255,.18);color:#dffdfc}
@@ -78,12 +104,12 @@
     .btn:hover{transform:translateY(-2px)}
     .btn.primary{color:#062535;background:linear-gradient(90deg,var(--aqua-2),var(--sand));border-color:transparent}
 
-    /* Section headers */
+
     .section-head{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:0 auto 24px;max-width:var(--maxw);text-align:center}
     .title{font-family:Outfit, Inter;font-weight:900;letter-spacing:.4px;font-size:clamp(24px, 3vw, 40px)}
     .muted{color:var(--fg-dim)}
 
-    /* Grids */
+
     .grid{display:grid;gap:18px}
     .grid-4{grid-template-columns: repeat(4, 1fr)}
     .grid-3{grid-template-columns: repeat(3, 1fr)}
@@ -92,11 +118,11 @@
     @media (max-width: 980px){ .grid-3{grid-template-columns:1fr 1fr} }
     @media (max-width: 640px){ .grid-2, .grid-3, .grid-4{grid-template-columns:1fr} }
 
-    /* Cards */
+
     .card{background:rgba(255,255,255,.06);border:2px solid var(--aqua-1);border-radius:20px;padding:18px;box-shadow:var(--shadow);transition:.2s}
     .card:hover{transform:translateY(-3px);border-color:var(--sand)}
 
-    /* About / Services */
+
     .about .stat{display:flex;align-items:center;gap:10px}
     .bubble{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg, rgba(61,218,215,.25), rgba(255,216,156,.18));border:1px solid rgba(255,255,255,.14)}
     .kpi{font:900 26px/1 Outfit}
@@ -104,17 +130,17 @@
     .service h4{margin:0;font:800 18px/1.2 Inter}
     .service p{margin:0;color:var(--fg-dim)}
 
-    /* Groups */
+
     .group{display:grid; grid-template-columns: 72px 1fr; gap:12px; align-items:center}
     .group img{width:72px;height:72px;border-radius:16px;border:2px solid var(--sand);background:#062535;object-fit:cover}
     .g-title{font:800 18px/1.2 Outfit;margin:0;color:var(--fg-0)}
     .g-meta{font:600 13px/1.2 Inter; color:var(--fg-dim)}
 
-    /* Reveal */
+
     .reveal{opacity:0;transform:translateY(12px);transition:.5s ease}
     .reveal.visible{opacity:1;transform:none}
 
-    /* Footer */
+
     footer{padding:30px 24px;color:var(--fg-dim)}
     .foot{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
   </style>
@@ -122,10 +148,10 @@
 <body>
   <div class="scroll-progress" id="scrollProgress"></div>
 
-  <!-- Loader -->
+
   <div id="loader" aria-hidden="true" style="position:fixed;inset:0;display:grid;place-items:center;z-index:9999;background:radial-gradient(900px 600px at 50% -10%, rgba(61,218,215,.12), transparent 60%), #03141c;transition:opacity .6s ease .1s, visibility .6s ease .1s"><div class="loader-card" style="width:min(560px,92vw);padding:28px;border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);box-shadow:var(--shadow);text-align:center"><div class="logo-mark" style="width:84px;height:84px;margin:0 auto 12px;position:relative;filter:drop-shadow(0 8px 30px rgba(61,218,215,.35))"><div class="ring" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, var(--aqua-1), var(--sand), var(--aqua-2));-webkit-mask:radial-gradient(circle at 50% 50%, transparent 47%, black 48%);mask:radial-gradient(circle at 50% 50%, transparent 47%, black 48%);animation:spin 2.6s linear infinite"></div><div class="b" style="position:absolute;inset:18%;border-radius:22%;background:linear-gradient(135deg, #061a24 35%, rgba(61,218,215,.15));display:grid;place-items:center;font-family:Outfit, Inter;font-weight:900;font-size:40px;color:#eafffb;border:1px solid rgba(255,255,255,.12);text-shadow:0 2px 16px rgba(61,218,215,.35)">B</div></div><div class="loader-title" style="font:800 26px/1 Outfit, Inter;letter-spacing:.5px;margin:6px 0 4px">Barakahs</div><div class="loader-sub" style="color:var(--fg-dim);font-size:14px;margin-bottom:14px">Clean builds. Simple process.</div><div class="progress" aria-label="Loading" style="height:10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative"><span style="content:'';position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,var(--aqua-2),var(--sand));box-shadow:inset 0 0 20px rgba(255,255,255,.2),0 0 20px rgba(255,216,156,.5);animation:load 2.8s ease forwards"></span></div></div></div>
 
-  <!-- Nav -->
+
   <nav class="navbar nav-hidden" id="nav">
     <div class="nav-wrap">
       <div class="brand"><div class="brand-mark"></div><span>Barakahs</span></div>
@@ -149,11 +175,11 @@
     <a href="https://discord.gg/NUJ85YXq3Y" target="_blank" rel="noopener">Discord</a>
   </div>
 
-  <!-- Background -->
+
   <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
   <main>
-    <!-- Hero -->
+
     <section id="home" class="hero">
       <div class="container hero-inner reveal">
         <div class="badge">🌊 Welcome to <strong>Barakahs</strong></div>
@@ -168,7 +194,7 @@
       </div>
     </section>
 
-    <!-- About -->
+
     <section id="about" class="about">
       <div class="container">
         <div class="section-head reveal">
@@ -204,7 +230,7 @@
       </div>
     </section>
 
-    <!-- Services -->
+
     <section id="services">
       <div class="container">
         <div class="section-head reveal">
@@ -248,7 +274,6 @@
       </div>
     </section>
 
-    <!-- Groups -->
     <section id="groups">
       <div class="container">
         <div class="section-head reveal">
@@ -282,7 +307,7 @@
       </div>
     </section>
 
-    <!-- Join -->
+
     <section id="join">
       <div class="container">
         <div class="section-head reveal">
@@ -319,13 +344,13 @@
   const $ = (q, scope=document) => scope.querySelector(q)
   const $$ = (q, scope=document) => scope.querySelectorAll(q)
 
-  // Loader
+
   const loader = $('#loader')
   window.addEventListener('load', () => {
     setTimeout(()=>{ loader.style.opacity='0'; loader.style.visibility='hidden'; $('#nav').classList.remove('nav-hidden') }, 900)
   })
 
-  // Nav show/hide + progress
+
   let lastY = window.scrollY
   const nav = $('#nav')
   function onScroll(){
@@ -340,31 +365,30 @@
   }
   document.addEventListener('scroll', onScroll, {passive:true})
 
-  // Drawer
+
   const drawer = $('#drawer')
   $('#openDrawer')?.addEventListener('click', (e)=>{ e.preventDefault(); drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block' })
   drawer.addEventListener('click', ()=> drawer.style.display='none')
 
-  // Reveal
+
   const revealObs = new IntersectionObserver(entries=>{
     entries.forEach(ent=>{ if(ent.isIntersecting){ ent.target.classList.add('visible'); revealObs.unobserve(ent.target) } })
   }, {threshold:.2})
   $$('.reveal').forEach(el=>revealObs.observe(el))
 
-  // Magnetic buttons
+
   $$('.magnet').forEach(wrap => {
     const a = wrap.querySelector('a')
     wrap.addEventListener('mousemove', (e)=>{ const r = wrap.getBoundingClientRect(); const x=e.clientX-(r.left+r.width/2), y=e.clientY-(r.top+r.height/2); a.style.transform=`translate(${x*0.2}px, ${y*0.2}px)` })
     wrap.addEventListener('mouseleave', ()=>{ a.style.transform='translate(0,0)' })
   })
 
-  // Tilt cards
+
   $$('.tilt').forEach(card => {
     card.addEventListener('mousemove', (e)=>{ const r=card.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5; card.style.setProperty('--ry', `${x*9}deg`); card.style.setProperty('--rx', `${-y*9}deg`) })
     card.addEventListener('mouseleave', ()=>{ card.style.setProperty('--ry','0deg'); card.style.setProperty('--rx','0deg') })
   })
 
-  // Ocean background: waves, bubbles, light caustics
   const canvas = $('#bgCanvas');
   const ctx = canvas.getContext('2d', { alpha:true });
   let W=0, H=0, bubbles=[], t=0;
@@ -384,7 +408,6 @@
     t += 0.016;
     ctx.clearRect(0,0,W,H);
 
-    // Light caustics
     ctx.globalCompositeOperation='lighter';
     for(let i=0;i<3;i++){
       const grad = ctx.createLinearGradient(0,0,W,H);
@@ -399,7 +422,6 @@
     }
     ctx.globalCompositeOperation='source-over';
 
-    // Waves (two layers)
     drawWave(H*0.72, 22, .006, 1.2, 'rgba(61,218,215,.12)');
     drawWave(H*0.78, 28, .004, 0.9, 'rgba(61,218,215,.18)');
 
@@ -411,7 +433,6 @@
       ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
     }
 
-    // Bubbles rising
     for(const b of bubbles){
       const grad = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*1.6);
       grad.addColorStop(0,`hsla(${b.hue},80%,70%,.35)`);
@@ -425,10 +446,8 @@
     requestAnimationFrame(loop)
   })();
 
-  // Year
   (function(){ const y = new Date().getFullYear(); const span=document.createElement('span'); span.textContent=y; document.querySelectorAll('#year').forEach(n=>n.textContent=y) })()
 
-  // Groups enhancement (icons + counts)
   const groups = [
     { id: 35622107, url: 'https://www.roblox.com/communities/35622107/Khalid-Games', title: 'Khalid Games' },
     { id: 34264442, url: 'https://www.roblox.com/communities/34264442/Tycoon-Games-3#!/about', title: 'Tycoon Games 3' },
