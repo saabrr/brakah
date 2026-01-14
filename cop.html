@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NYPD PO Exam Tutorial Practice (Auto-Grading)</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; line-height: 1.35; }
+    header { padding: 16px; border-bottom: 1px solid rgba(127,127,127,.3); position: sticky; top: 0; background: Canvas; z-index: 5; }
+    h1 { margin: 0 0 6px 0; font-size: 18px; }
+    .sub { opacity: .8; font-size: 13px; }
+    main { max-width: 980px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button, select, input[type="number"] {
+      padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(127,127,127,.35);
+      background: Canvas; color: CanvasText; cursor: pointer;
+    }
+    button.primary { background: #2563eb; color: #fff; border-color: transparent; }
+    button.danger { background: #b91c1c; color: #fff; border-color: transparent; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .card {
+      border: 1px solid rgba(127,127,127,.3);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(127,127,127,.05);
+    }
+    .meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; opacity: .85; }
+    .pill { padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(127,127,127,.35); background: Canvas; }
+
+    details { border: 1px dashed rgba(127,127,127,.35); border-radius: 12px; padding: 10px; background: rgba(127,127,127,.04); }
+    summary { cursor: pointer; font-weight: 600; }
+
+    .qhead { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .qid { font-weight: 700; }
+    .qtext { margin-top: 8px; }
+    .opts { margin-top: 10px; display: grid; gap: 8px; }
+    label.opt {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px; border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.25);
+      background: Canvas;
+      cursor: pointer;
+    }
+    label.opt:hover { border-color: rgba(127,127,127,.55); }
+
+    .result { margin-top: 12px; padding: 10px; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); background: Canvas; }
+    .ok { border-color: rgba(34,197,94,.8); }
+    .bad { border-color: rgba(239,68,68,.8); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 860px) { .grid2 { grid-template-columns: 320px 1fr; } }
+
+    .small { font-size: 12px; opacity: .85; }
+    .muted { opacity: .8; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    a { color: inherit; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>NYPD Police Officer Exam Tutorial Practice (Auto-Grading)</h1>
+  <div class="sub">
+    Single-file HTML. Runs offline. Questions/answers match the tutorial’s answer key.
+    PDF: <a href="https://www.nyc.gov/assets/nypd/downloads/pdf/careers/po-exam-tutorial-2021-04-14.pdf" target="_blank" rel="noreferrer">open tutorial</a>
+  </div>
+</header>
+
+<main class="grid2">
+  <section class="card">
+    <div class="row">
+      <button class="primary" id="startBtn">Start / Resume</button>
+      <button id="submitBtn" disabled>Submit & Grade</button>
+      <button id="reviewBtn" disabled>Review Incorrect</button>
+      <button class="danger" id="resetBtn">Reset</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid rgba(127,127,127,.25);margin:12px 0;">
+
+    <div class="row">
+      <label class="small">Mode
+        <select id="modeSel">
+          <option value="all">All 40 Questions</option>
+          <option value="custom">Custom Set</option>
+        </select>
+      </label>
+
+      <label class="small"># Questions
+        <input id="countInp" type="number" min="1" max="40" value="20" />
+      </label>
+
+      <label class="small">Shuffle
+        <select id="shuffleSel">
+          <option value="yes" selected>Yes</option>
+          <option value="no">No</option>
+        </select>
+      </label>
+
+      <label class="small">Timer (minutes)
+        <select id="timerSel">
+          <option value="0">Off</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="45">45</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="margin-top:12px" class="meta">
+      <div class="pill">Progress: <span id="prog">0 / 0</span></div>
+      <div class="pill">Answered: <span id="answered">0</span></div>
+      <div class="pill">Time: <span id="time" class="mono">--:--</span></div>
+      <div class="pill">Score: <span id="score">—</span></div>
+    </div>
+
+    <p class="small muted" style="margin-top:12px">
+      Tips:
+      <br>• Your choices auto-save (localStorage).
+      <br>• Some questions depend on pictures/diagrams; those cards include a “See PDF” note.
+      <br>• “Review Incorrect” shows only missed items after grading.
+    </p>
+  </section>
+
+  <section id="quiz" class="card">
+    <div class="muted">Click <b>Start / Resume</b> to load questions.</div>
+  </section>
+</main>
+
+<script>
+/**
+ * DATA
+ * - prompt supports HTML.
+ * - passages included via <details>.
+ * - Correct answers come from the tutorial answer key (1..40).
+ */
+const PDF_URL = "https://www.nyc.gov/assets/nypd/downloads/pdf/careers/po-exam-tutorial-2021-04-14.pdf";
+
+const QUESTIONS = [
+  {
+    id: 1,
+    prompt: `
+      <details open>
+        <summary>Passage (use for Q1–Q2)</summary>
+        <div>
+          Officer Finnegan and Officer McCoy respond to a past assault. Jose (30-year-old Hispanic male) says he was walking
+          <b>northbound on West Street</b> when a man punched him and stole his wallet. Jose describes a 35-year-old, 6’10” Asian male,
+          long black hair, green cap, black shirt, blue jeans. Three witnesses are interviewed:
+          <ul>
+            <li><b>Witness 1</b>: Matches Jose’s description and says the suspect ran down Canal Street.</li>
+            <li><b>Witness 2</b>: Says a tall white guy ~5’10”, blue shirt/blue jeans, punched him while walking down Canal Street.</li>
+            <li><b>Witness 3</b>: Says an Asian guy in black shirt/blue jeans, black hair, punched and took wallet (less detail).</li>
+          </ul>
+        </div>
+      </details>
+      <div class="qtext">
+        According to the information above, which witnesses’ recollection of the incident is the <b>LEAST ACCURATE</b>?
+      </div>
+    `,
+    options: { A: "Witness 1", B: "Witness 3", C: "Witness 2", D: "Jose" },
+    answer: "C"
+  },
+  {
+    id: 2,
+    prompt: `
+      <details>
+        <summary>Passage (same as Q1)</summary>
+        <div>See Q1 passage above.</div>
+      </details>
+      <div class="qtext">According to the information above, what direction was Jose traveling?</div>
+    `,
+    options: { A: "Northbound", B: "Eastbound", C: "Southbound", D: "Westbound" },
+    answer: "A"
+  },
+  {
+    id: 3,
+    prompt: `
+      <div class="qtext"><b>Burglary</b> is committed when a person enters or remains in a building/dwelling unlawfully, intending to commit a crime.
+      Which is the best example of a burglary?</div>
+    `,
+    options: {
+      A: "Tom passes an open door to a storage facility with sign “Authorized Persons Only,” enters intending to steal a wallet, then flees when he hears voices (no theft).",
+      B: "Tom enters a butcher’s market to buy pork chops, hides pork chops in his jacket, and leaves without paying.",
+      C: "Tom’s car breaks down in snow; he forces open an abandoned shed door to get out of the snow.",
+      D: "Tom, a drug store employee, enters the employee locker room he is allowed to use and steals another employee’s wallet."
+    },
+    answer: "A"
+  },
+  {
+    id: 4,
+    prompt: `<div class="qtext">Solve: 8(4) + 2(20) + 10 = X</div>`,
+    options: { A: "72", B: "50", C: "62", D: "82" },
+    answer: "D"
+  },
+  {
+    id: 5,
+    prompt: `
+      <details open>
+        <summary>Procedure (use for Q5–Q7)</summary>
+        <div>
+          Suspected overdose procedure (order):
+          <ol>
+            <li>Request an ambulance and render reasonable aid. If not present, request a member equipped with Naloxone. Ascertain from witnesses if Naloxone was administered prior to police arrival.</li>
+            <li>If unresponsive, administer Naloxone if appropriate. Request dispatcher notify EMS that Naloxone was administered.
+              If no breathing/no pulse: perform CPR/AED. If no response within <b>3–5 minutes</b>, administer one additional dose. Inform EMS of revival attempts and number of doses.</li>
+          </ol>
+        </div>
+      </details>
+      <div class="qtext">
+        Officer Darious administers Naloxone. Victim still not responding but has a pulse. How long should he wait to administer another dose if no response after CPR?
+      </div>
+    `,
+    options: { A: "Three to five minutes", B: "Six to eight minutes", C: "Three to five seconds", D: "Ten to fifteen minutes" },
+    answer: "A"
+  },
+  {
+    id: 6,
+    prompt: `
+      <details>
+        <summary>Procedure (same as Q5)</summary><div>See Q5 procedure.</div>
+      </details>
+      <div class="qtext">Officer Darious arrives to find an unconscious male overdosed on opioids. He is <b>not equipped</b> with his Naloxone kit. What should he do?</div>
+    `,
+    options: {
+      A: "Wait for EMS to arrive at the scene.",
+      B: "Request the response of a uniformed member equipped with a Naloxone Kit.",
+      C: "Ascertain from witnesses if Naloxone was administered prior to police arrival.",
+      D: "Inform EMS personnel of any attempt to revive individual."
+    },
+    answer: "B"
+  },
+  {
+    id: 7,
+    prompt: `
+      <details>
+        <summary>Procedure (same as Q5)</summary><div>See Q5 procedure.</div>
+      </details>
+      <div class="qtext">After Officer Darious administers Naloxone, what should he do next according to the information above?</div>
+    `,
+    options: {
+      A: "Administer another dose in the time frame mentioned above.",
+      B: "Call responding EMS personnel on his department cellphone and alert them.",
+      C: "Request the dispatcher to notify responding EMS personnel Naloxone was administered.",
+      D: "Request an ambulance to the scene."
+    },
+    answer: "C"
+  },
+  {
+    id: 8,
+    prompt: `<div class="qtext">Hit and run witnesses gave different license plate accounts. Which plate number is most likely correct?</div>`,
+    options: { A: "381JRZ", B: "358JRZ", C: "351JTZ", D: "351JRZ" },
+    answer: "D"
+  },
+  {
+    id: 9,
+    prompt: `<div class="qtext">Burglary scene: four witness accounts vary. Which account is most likely correct?</div>`,
+    options: {
+      A: "Female Caucasian 5’1” 120 lbs black sweater, kicked door, stole jewelry box, silver gun visible, ran southbound Bay 10th.",
+      B: "Female Caucasian 5’1” 110 lbs purple sweater, kicked door, stole jewelry box, silver gun in pants pocket, ran northbound Bay 10th.",
+      C: "Female Caucasian 5’7” 120 lbs purple sweater, kicked window, stole jewelry box, silver gun visible, ran northbound Bay 10th.",
+      D: "Female Caucasian 5’1” 120 lbs purple sweater, kicked door, stole jewelry box and DVD player, black gun, ran northbound Bay 9th."
+    },
+    answer: "B"
+  },
+  {
+    id: 10,
+    prompt: `
+      <div class="qtext">
+        Captain Dillon has: Police Officers 50, Sergeants 10, Lieutenants 7. One PO assigned to stationhouse security (not available).
+        If all lieutenants supervise an equal amount of police officers, how many POs per lieutenant?
+      </div>
+    `,
+    options: { A: "8", B: "5", C: "6", D: "7" },
+    answer: "D"
+  },
+  {
+    id: 11,
+    prompt: `
+      <div class="qtext">
+        Officers find a male with multiple stab wounds, crowd present, one unit at scene. One officer calls for ambulance; the other applies pressure to wounds.
+        What should the next course of action be?
+      </div>
+    `,
+    options: {
+      A: "Interview witnesses for description and what happened.",
+      B: "Alert the supervisor that you have a male stabbed and you are applying pressure to wounds.",
+      C: "Canvass for a suspect.",
+      D: "Look for the knife used."
+    },
+    answer: "B"
+  },
+  {
+    id: 12,
+    prompt: `
+      <details open>
+        <summary>Passage (use for Q12–Q15)</summary>
+        <div>
+          Officers respond to assault in progress; Mrs. Dansby is unconscious with abrasions and swelling to the <b>right side of her face</b>.
+          EMS says traumatic head injury from being hit with a blunt object; she’s in a coma, transported to <b>Clove Lake Hospital</b>.
+          Witness says perpetrator drove a <b>gold</b> 2002 Toyota Camry; Officer Kennedy calls for ambulance on his radio.
+        </div>
+      </details>
+      <div class="qtext">Where did Mrs. Dansby sustain injuries?</div>
+    `,
+    options: { A: "Right side of her face", B: "Left side of her face", C: "Entire face", D: "Forehead" },
+    answer: "A"
+  },
+  {
+    id: 13,
+    prompt: `<details><summary>Passage (same as Q12)</summary><div>See Q12 passage.</div></details><div class="qtext">What hospital was Mrs. Dansby transported to?</div>`,
+    options: { A: "Richmond County Hospital", B: "Richmond Lake Hospital", C: "Clove Hospital", D: "Clove Lake Hospital" },
+    answer: "D"
+  },
+  {
+    id: 14,
+    prompt: `<details><summary>Passage (same as Q12)</summary><div>See Q12 passage.</div></details><div class="qtext">What color vehicle was the perpetrator driving?</div>`,
+    options: { A: "Black", B: "Blue", C: "Gold", D: "White" },
+    answer: "C"
+  },
+  {
+    id: 15,
+    prompt: `<details><summary>Passage (same as Q12)</summary><div>See Q12 passage.</div></details><div class="qtext">Who calls for an ambulance with his department radio?</div>`,
+    options: { A: "Officer Kennedy", B: "Officer Hoover", C: "Technician Ferguson", D: "Mrs. Dansby" },
+    answer: "A"
+  },
+  {
+    id: 16,
+    prompt: `
+      <details open>
+        <summary>Procedure (use for Q16–Q17)</summary>
+        <div>
+          Dangerous animal/dog complaint procedure (order):
+          <ol>
+            <li>Dispatcher requests Animal Care & Control (A.C.&C.) respond if animal presents danger or left uncared for.</li>
+            <li>Prepare <b>Dangerous Animal/Bite Report</b> and, if required, <b>Aided Report</b> (if a civilian is injured).</li>
+            <li>Request ESU if A.C.&C. cannot respond expeditiously (15–30 min) or cannot be ascertained; deliver animal to A.C.&C. rep if they respond; request patrol supervisor.</li>
+            <li>Place kennel in backseat; transport animal to A.C.&C. intake center; obtain receipt.</li>
+          </ol>
+        </div>
+      </details>
+      <div class="qtext">Aggressive dog barking for hours in abandoned lot. What report(s) must be completed?</div>
+    `,
+    options: {
+      A: "Dangerous Animal/Bite Report and Aided Card",
+      B: "Aided Card",
+      C: "Complaint Report",
+      D: "Dangerous Animal/Bite Report"
+    },
+    answer: "D"
+  },
+  {
+    id: 17,
+    prompt: `<details><summary>Procedure (same as Q16)</summary><div>See Q16 procedure.</div></details><div class="qtext">A.C.&C. unit is unavailable. What should Officer Ramone do according to the info above?</div>`,
+    options: {
+      A: "Place the kennel in the back seat of his patrol car.",
+      B: "Request the patrol supervisor to respond to the scene.",
+      C: "Request an Emergency Services Unit to respond to the scene.",
+      D: "None of the above."
+    },
+    answer: "C"
+  },
+  {
+    id: 18,
+    prompt: `
+      <div class="qtext">
+        Diagram question: “Based on the diagram above, how many square feet is the house?”
+        <div class="small muted">See diagram in the PDF (around Q18–Q19). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "1,000 S.F.", B: "960 S.F.", C: "944 S.F.", D: "27 S.F." },
+    answer: "C"
+  },
+  {
+    id: 19,
+    prompt: `
+      <div class="qtext">
+        Diagram route question: “Bath 2 (16A) … most direct route in correct order?”
+        <div class="small muted">See diagram in the PDF (around Q18–Q19). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: {
+      A: "40,38,36,34,24,62,56,16A",
+      B: "40,38,39,14,30,24,62,56,16A",
+      C: "36,34,24,62,56,58,16A",
+      D: "39,34,30,24,22,62,56,16A"
+    },
+    answer: "A"
+  },
+  {
+    id: 20,
+    prompt: `
+      <details open>
+        <summary>Passage (use for Q20–Q21)</summary>
+        <div>
+          Neighbors give times they heard the gunshot from Mr. Cain’s apartment:
+          <ul>
+            <li>Mr. Mulder: heard at about 11 A.M.</li>
+            <li>Mrs. Scully: heard at about 1 P.M.</li>
+            <li>Mr. Scofield: heard at about 11 A.M.</li>
+            <li>Mrs. Burrows: heard at about 10:55 A.M.</li>
+            <li>Mr. Heckler: heard at about 10:50 A.M.</li>
+          </ul>
+        </div>
+      </details>
+      <div class="qtext">Which witness’s recollection of the time of the shooting differs from the rest?</div>
+    `,
+    options: { A: "Mr. Mulder", B: "Mrs. Scully", C: "Mr. Scofield", D: "Mrs. Burrows" },
+    answer: "B"
+  },
+  {
+    id: 21,
+    prompt: `<details><summary>Passage (same as Q20)</summary><div>See Q20 passage.</div></details><div class="qtext">At what time did Mr. Heckler last see Mr. Cain?</div>`,
+    options: { A: "10:50 A.M.", B: "11 A.M.", C: "10:55 A.M.", D: "9:00 A.M." },
+    answer: "D"
+  },
+  {
+    id: 22,
+    prompt: `
+      <div class="qtext">
+        Stabbings in Central Park: suspect described as white female ~110 lbs, 5’01”–5’03”, long blond hair, red heels, red lipstick,
+        and <b>two different colored eyes</b> (brown right, blue left). Officer stops four matching females.
+        Which description is most helpful to identify the suspect?
+      </div>
+    `,
+    options: {
+      A: "Long blonde hair down to her knees.",
+      B: "Wearing red lipstick.",
+      C: "5’01”–5’03” tall.",
+      D: "Two different colored eyes."
+    },
+    answer: "D"
+  },
+  {
+    id: 23,
+    prompt: `
+      <div class="qtext">
+        Mirror reflection of the shape illustrated.
+        <div class="small muted">This requires the picture/options from the PDF (Q23). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "Option A", B: "Option B", C: "Option C", D: "Option D" },
+    answer: "D"
+  },
+  {
+    id: 24,
+    prompt: `<div class="qtext">Which could be a potential problem for a police officer when attempting to write a parking summons?</div>`,
+    options: {
+      A: "Car parked in front of a fire hydrant with headlights on.",
+      B: "Car parked in a “no parking” zone 12 P.M. Thursday.",
+      C: "Double parked car with a different license plate on the front than back.",
+      D: "Car parked by a meter where time has expired."
+    },
+    answer: "C"
+  },
+  {
+    id: 25,
+    prompt: `
+      <details open>
+        <summary>EDP procedure (use for Q25–Q27)</summary>
+        <div>
+          EDP = emotionally disturbed person. Steps include requesting EDP location history before arrival, and on arrival alerting dispatcher you arrived with radio code <b>10-84</b>, etc.
+        </div>
+      </details>
+      <div class="qtext">On arrival at the location, what radio code should Officer Jackson relay?</div>
+    `,
+    options: { A: "10-48", B: "10-84", C: "10-54 EDP", D: "10-34" },
+    answer: "B"
+  },
+  {
+    id: 26,
+    prompt: `<details><summary>EDP procedure (same as Q25)</summary><div>See Q25.</div></details><div class="qtext">After alerting the patrol supervisor, what is the next course of action according to the order?</div>`,
+    options: {
+      A: "Attempt to isolate and contain the EDP while maintaining a zone of safety.",
+      B: "Request the EDP location history from the dispatcher.",
+      C: "Alert the radio dispatcher that you have arrived at the scene.",
+      D: "Decide if additional personnel/equipment is necessary."
+    },
+    answer: "D"
+  },
+  {
+    id: 27,
+    prompt: `<details><summary>EDP procedure (same as Q25)</summary><div>See Q25.</div></details><div class="qtext">What does EDP stand for?</div>`,
+    options: {
+      A: "Erratically Disturbed Perpetrator",
+      B: "Erratically Disturbed Person",
+      C: "Emotionally Disturbed Person",
+      D: "Emotionally Distracted Person"
+    },
+    answer: "C"
+  },
+  {
+    id: 28,
+    prompt: `
+      <div class="qtext">
+        Memorization picture question: How many tires does the NYPD vehicle have?
+        <div class="small muted">Requires the picture in the PDF (Q28–Q31). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "1", B: "3", C: "2", D: "4" },
+    answer: "C"
+  },
+  {
+    id: 29,
+    prompt: `
+      <div class="qtext">
+        What precinct is displayed on the NYPD vehicle?
+        <div class="small muted">Requires the picture in the PDF (Q28–Q31). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "63", B: "73", C: "62", D: "83" },
+    answer: "A"
+  },
+  {
+    id: 30,
+    prompt: `
+      <div class="qtext">
+        How many helmet(s) are hanging off the NYPD vehicle?
+        <div class="small muted">Requires the picture in the PDF (Q28–Q31). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "0", B: "2", C: "1", D: "3" },
+    answer: "C"
+  },
+  {
+    id: 31,
+    prompt: `
+      <div class="qtext">
+        What number is displayed on the helmet(s)?
+        <div class="small muted">Requires the picture in the PDF (Q28–Q31). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "3671", B: "31671", C: "3167", D: "631713" },
+    answer: "B"
+  },
+  {
+    id: 32,
+    prompt: `
+      <div class="qtext">
+        Diagram question: How many bath(s) are in the house?
+        <div class="small muted">Requires the diagram in the PDF (Q32–Q33). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "0", B: "1", C: "2", D: "3" },
+    answer: "B"
+  },
+  {
+    id: 33,
+    prompt: `
+      <div class="qtext">
+        Diagram question: Horizontal wall of the balcony is how many square feet?
+        <div class="small muted">Requires the diagram in the PDF (Q32–Q33). <a href="${PDF_URL}" target="_blank" rel="noreferrer">Open PDF</a></div>
+      </div>
+    `,
+    options: { A: "21 S.F.", B: "10.5 S.F.", C: "50 S.F.", D: "60.5 S.F." },
+    answer: "B"
+  },
+  {
+    id: 34,
+    prompt: `
+      <div class="qtext">
+        Multiple murders; suspect described as Hispanic male, short black hair, ~300 lbs, rose tattoo on forearm, wearing teal trench coat.
+        Officer stops three Hispanic males. Which characteristic is most helpful to identify the suspect?
+      </div>
+    `,
+    options: {
+      A: "Teal trench coat",
+      B: "Short black hair",
+      C: "Approximately 300 lbs",
+      D: "Rose tattoo on forearm"
+    },
+    answer: "D"
+  },
+  {
+    id: 35,
+    prompt: `<div class="qtext">Command issued 400 tickets in January. 20% were for speeding. How many speeding tickets?</div>`,
+    options: { A: "80", B: "70", C: "60", D: "90" },
+    answer: "A"
+  },
+  {
+    id: 36,
+    prompt: `
+      <details open>
+        <summary>Passage (use for Q36–Q39)</summary>
+        <div>
+          Past burglary at 721 West End Ave, Apt 4. Tenant Samantha Telly left at 10:00 A.M. and returned ~11:20 P.M.
+          Missing: DVD player and a shoe box with about $2,000 from under bed. Officers interview neighbors:
+          Apt 2: Mr. Doland. Apt 5: Mrs. Chau. Apt 3: no answer.
+        </div>
+      </details>
+      <div class="qtext">Who lives in apartment 5?</div>
+    `,
+    options: { A: "Mrs. Samantha Telly", B: "Mrs. Chau", C: "Mr. Doland", D: "Unknown, they did not answer the door" },
+    answer: "B"
+  },
+  {
+    id: 37,
+    prompt: `<details><summary>Passage (same as Q36)</summary><div>See Q36 passage.</div></details><div class="qtext">At what time did Mrs. Telly leave her apartment that day?</div>`,
+    options: { A: "10:00 A.M.", B: "11:30 P.M.", C: "11:20 P.M.", D: "10:00 P.M." },
+    answer: "A"
+  },
+  {
+    id: 38,
+    prompt: `<details><summary>Passage (same as Q36)</summary><div>See Q36 passage.</div></details><div class="qtext">What is missing from Mrs. Telly’s apartment?</div>`,
+    options: {
+      A: "Shoe box only",
+      B: "DVD player only",
+      C: "Shoe box with $2,000",
+      D: "Shoe box with $2,000 and a DVD player"
+    },
+    answer: "D"
+  },
+  {
+    id: 39,
+    prompt: `<details><summary>Passage (same as Q36)</summary><div>See Q36 passage.</div></details><div class="qtext">The male perpetrator is?</div>`,
+    options: { A: "Hispanic", B: "Caucasian", C: "African-American", D: "Asian" },
+    answer: "A"
+  },
+  {
+    id: 40,
+    prompt: `
+      <div class="qtext">
+        Collision summary: Yellow sedan disobeys stop sign and hits red SUV going straight down 2nd Ave.
+        Tractor trailer behind red SUV rear-ends it after it was struck. Which statement is the <b>LEAST accurate</b> recollection?
+      </div>
+    `,
+    options: {
+      A: "Yellow sedan operator says he made a complete stop; red SUV speeding struck him in intersection.",
+      B: "Red SUV operator says yellow sedan disregarded stop sign on East 20th and struck his vehicle.",
+      C: "Tractor trailer operator says collision resulted from yellow sedan disregarding stop sign on East 20th.",
+      D: "Witness says tractor trailer rear-ended red SUV on 2nd Ave after yellow sedan struck the red SUV."
+    },
+    answer: "A"
+  }
+];
+
+// ------- APP STATE -------
+const STORAGE_KEY = "nypd_po_practice_v1";
+
+let state = loadState() || {
+  setIds: [],
+  answers: {},     // { [id]: "A"|"B"|"C"|"D" }
+  graded: false,
+  showOnlyIncorrect: false,
+  startedAt: null, // ms
+  durationMs: 20 * 60 * 1000,
+  timerOn: true
+};
+
+let timerHandle = null;
+
+// ------- HELPERS -------
+function $(id) { return document.getElementById(id); }
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function formatTime(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return String(m).padStart(2, "0") + ":" + String(r).padStart(2, "0");
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function currentSetQuestions() {
+  const map = new Map(QUESTIONS.map(q => [q.id, q]));
+  return state.setIds.map(id => map.get(id)).filter(Boolean);
+}
+
+function isCorrect(q) {
+  const choice = state.answers[q.id];
+  return choice && choice === q.answer;
+}
+
+function answeredCount() {
+  return state.setIds.reduce((n, id) => n + (state.answers[id] ? 1 : 0), 0);
+}
+
+function scoreNow() {
+  const qs = currentSetQuestions();
+  const total = qs.length;
+  const correct = qs.reduce((n, q) => n + (isCorrect(q) ? 1 : 0), 0);
+  return { correct, total };
+}
+
+function stopTimer() {
+  if (timerHandle) clearInterval(timerHandle);
+  timerHandle = null;
+}
+
+function startTimer() {
+  stopTimer();
+  timerHandle = setInterval(() => {
+    if (!state.timerOn || !state.startedAt) return;
+    const elapsed = Date.now() - state.startedAt;
+    const left = state.durationMs - elapsed;
+    $("time").textContent = formatTime(left);
+
+    if (left <= 0) {
+      // Auto-submit when time hits 0
+      stopTimer();
+      gradeQuiz(true);
+    }
+  }, 250);
+}
+
+// ------- RENDER -------
+function render() {
+  const qs = currentSetQuestions();
+  const total = qs.length;
+
+  $("prog").textContent = `${total ? answeredCount() : 0} / ${total}`;
+  $("answered").textContent = String(answeredCount());
+
+  // Score
+  if (!state.graded) {
+    $("score").textContent = "—";
+  } else {
+    const { correct, total } = scoreNow();
+    const pct = total ? Math.round((correct / total) * 100) : 0;
+    $("score").textContent = `${correct}/${total} (${pct}%)`;
+  }
+
+  // Timer display
+  if (!state.timerOn || !state.startedAt) {
+    $("time").textContent = "--:--";
+  } else {
+    const left = state.durationMs - (Date.now() - state.startedAt);
+    $("time").textContent = formatTime(left);
+  }
+
+  // Buttons
+  $("submitBtn").disabled = total === 0 || state.graded === true;
+  $("reviewBtn").disabled = total === 0 || state.graded !== true;
+
+  // Build question list (maybe filtered)
+  const list = state.showOnlyIncorrect && state.graded
+    ? qs.filter(q => !isCorrect(q))
+    : qs;
+
+  const quiz = $("quiz");
+  quiz.innerHTML = "";
+
+  if (total === 0) {
+    quiz.innerHTML = `<div class="muted">No questions loaded. Click <b>Start / Resume</b>.</div>`;
+    return;
+  }
+
+  const topNote = document.createElement("div");
+  topNote.className = "meta";
+  topNote.innerHTML = `
+    <div class="pill">Showing: <b>${list.length}</b> / ${total}</div>
+    <div class="pill">Graded: <b>${state.graded ? "Yes" : "No"}</b></div>
+    <div class="pill">Filter: <b>${state.showOnlyIncorrect ? "Incorrect only" : "All"}</b></div>
+  `;
+  quiz.appendChild(topNote);
+
+  list.forEach((q, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const choice = state.answers[q.id] || "";
+
+    const head = document.createElement("div");
+    head.className = "qhead";
+    head.innerHTML = `
+      <div class="qid">Question ${q.id}</div>
+      <div class="small muted">Set position: ${idx + 1} / ${list.length}</div>
+    `;
+    card.appendChild(head);
+
+    const prompt = document.createElement("div");
+    prompt.className = "qtext";
+    prompt.innerHTML = q.prompt;
+    card.appendChild(prompt);
+
+    const opts = document.createElement("div");
+    opts.className = "opts";
+
+    ["A","B","C","D"].forEach(letter => {
+      const id = `q${q.id}_${letter}`;
+      const lab = document.createElement("label");
+      lab.className = "opt";
+      lab.setAttribute("for", id);
+      lab.innerHTML = `
+        <input id="${id}" type="radio" name="q${q.id}" value="${letter}" ${choice === letter ? "checked" : ""} ${state.graded ? "disabled" : ""}/>
+        <div><b>${letter})</b> ${escapeHtml(String(q.options[letter] || ""))}</div>
+      `;
+      opts.appendChild(lab);
+    });
+
+    // When not graded, allow changing answers
+    opts.addEventListener("change", (e) => {
+      if (state.graded) return;
+      const v = e.target && e.target.value;
+      if (!v) return;
+      state.answers[q.id] = v;
+      saveState();
+      render(); // update progress quickly
+    });
+
+    card.appendChild(opts);
+
+    // Show grading result if graded
+    if (state.graded) {
+      const res = document.createElement("div");
+      const correct = q.answer;
+      const ok = choice === correct;
+      res.className = "result " + (ok ? "ok" : "bad");
+
+      const your = choice ? choice : "(no answer)";
+      res.innerHTML = `
+        <div><b>${ok ? "Correct ✅" : "Incorrect ❌"}</b></div>
+        <div class="small">Your answer: <span class="mono">${your}</span></div>
+        <div class="small">Correct answer: <span class="mono">${correct}</span></div>
+      `;
+      card.appendChild(res);
+    }
+
+    quiz.appendChild(card);
+  });
+}
+
+// Basic HTML escaping for option text
+function escapeHtml(str) {
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// ------- ACTIONS -------
+function buildSet() {
+  const mode = $("modeSel").value;
+  const shuffleYes = $("shuffleSel").value === "yes";
+  const timerMin = Number($("timerSel").value || 0);
+
+  state.timerOn = timerMin > 0;
+  state.durationMs = timerMin * 60 * 1000;
+
+  state.graded = false;
+  state.showOnlyIncorrect = false;
+
+  // Build ids
+  let ids = QUESTIONS.map(q => q.id);
+
+  if (mode === "custom") {
+    const n = Math.max(1, Math.min(40, Number($("countInp").value || 20)));
+    ids = shuffleYes ? shuffle(ids).slice(0, n) : ids.slice(0, n);
+  } else {
+    ids = shuffleYes ? shuffle(ids) : ids;
+  }
+
+  state.setIds = ids;
+
+  // Keep existing answers only for items in set
+  const newAns = {};
+  for (const id of ids) {
+    if (state.answers[id]) newAns[id] = state.answers[id];
+  }
+  state.answers = newAns;
+
+  // Start timer baseline
+  state.startedAt = state.timerOn ? Date.now() : null;
+
+  saveState();
+  startTimer();
+  render();
+}
+
+function gradeQuiz(fromAutoTimer=false) {
+  if (state.setIds.length === 0) return;
+
+  state.graded = true;
+  state.showOnlyIncorrect = false;
+  saveState();
+  stopTimer();
+
+  // Lock UI / show score
+  render();
+
+  // Optional: scroll to top on auto-submit
+  if (fromAutoTimer) window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function reviewIncorrect() {
+  if (!state.graded) return;
+  state.showOnlyIncorrect = true;
+  saveState();
+  render();
+}
+
+function resetAll() {
+  stopTimer();
+  localStorage.removeItem(STORAGE_KEY);
+  state = {
+    setIds: [],
+    answers: {},
+    graded: false,
+    showOnlyIncorrect: false,
+    startedAt: null,
+    durationMs: 20 * 60 * 1000,
+    timerOn: true
+  };
+  render();
+}
+
+// ------- WIRES -------
+$("startBtn").addEventListener("click", () => {
+  // If a set exists, resume it; otherwise build a new one.
+  if (!state.setIds || state.setIds.length === 0) buildSet();
+  else {
+    // Resume timer if needed
+    if (state.timerOn && !state.graded && !state.startedAt) state.startedAt = Date.now();
+    saveState();
+    startTimer();
+    render();
+  }
+});
+
+$("submitBtn").addEventListener("click", () => gradeQuiz(false));
+$("reviewBtn").addEventListener("click", reviewIncorrect);
+$("resetBtn").addEventListener("click", resetAll);
+
+// If user changes settings before starting, do nothing until they click Start.
+// (But if they already have a set loaded and want to change it, just click Start again after Reset.)
+
+// Initial render
+render();
+startTimer(); // in case a prior session exists
+</script>
+</body>
+</html>
