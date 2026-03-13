@@ -4,7 +4,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const session = require('express-session');
 const helmet = require('helmet');
-const rateLimit = require('express-limit');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const crypto = require('crypto');
 const { initDb, getDb } = require('./db');
@@ -17,6 +17,7 @@ async function startServer() {
   const server = http.createServer(app);
 
   app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(express.static(path.join(__dirname, '../public')));
 
