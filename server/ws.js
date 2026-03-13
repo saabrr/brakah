@@ -138,6 +138,24 @@ function setupWebSocket(wss, game) {
         return;
       }
 
+if (type === 'adminBalance') {
+  if (!ws.user || ws.user.role !== 'owner') return send(ws, { type: 'error', message: 'No permission' });
+  const { targetUsername, amount } = msg;
+  const target = stmts.getUserByUsername.get(targetUsername);
+  if (!target) return send(ws, { type: 'error', message: 'User not found' });
+  const cents = Math.round(parseFloat(amount) * 100);
+  stmts.updateBalance.run(cents, target.id);
+  const newBal = stmts.getBalance.get(target.id);
+  send(ws, { type: 'balance', balance: newBal.balance_sats });
+  send(ws, { type: 'chat', username: 'System', role: 'system', message: `💰 $${(cents/100).toFixed(2)} added!`, time: Math.floor(Date.now()/1000) });
+  wss.clients.forEach(client => {
+    if (client.readyState === 1 && client.userId === target.id) {
+      send(client, { type: 'balance', balance: newBal.balance_sats });
+    }
+  });
+  return;
+}
+
       if (type === 'getStats') {
         send(ws, { type: 'stats', stats: stmts.userStats.get(ws.userId) });
         return;

