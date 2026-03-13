@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultBet — Crypto Casino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ── */
+:root{
+  --bg:#07090e;--bg2:#0c1018;--bg3:#111820;--panel:#0f1520;
+  --border:#1a2535;--border2:#243040;
+  --gold:#f0c040;--gold2:#c89a00;--gold-glow:rgba(240,192,64,0.35);
+  --cyan:#22d3ee;--cyan2:#0891b2;--cyan-glow:rgba(34,211,238,0.3);
+  --green:#22c55e;--green-glow:rgba(34,197,94,0.3);
+  --red:#f43f5e;--red-glow:rgba(244,63,94,0.3);
+  --purple:#a78bfa;
+  --text:#dde4f0;--text2:#7e92aa;--text3:#3a4a5c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(240,192,64,0.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes pulseGlow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes winPop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes crashShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+
+/* ── AUTH OVERLAY ── */
+#authOverlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(5,7,12,.98);backdrop-filter:blur(24px);
+  display:flex;align-items:center;justify-content:center;
+  animation:fadeIn .3s ease;
+}
+.auth-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:20px;
+  padding:44px 40px;width:440px;max-width:95vw;
+  position:relative;animation:slideUp .5s cubic-bezier(.34,1.3,.64,1);
+}
+.auth-card::before{
+  content:'';position:absolute;top:-1px;left:25%;right:25%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.auth-logo{text-align:center;margin-bottom:32px;}
+.auth-logo .wordmark{
+  font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;
+}
+.auth-logo .wordmark em{color:var(--gold);font-style:normal;}
+.auth-logo p{color:var(--text2);font-size:13px;margin-top:5px;}
+.auth-tabs{
+  display:flex;background:var(--bg2);border:1px solid var(--border);
+  border-radius:11px;padding:3px;margin-bottom:24px;
+}
+.atab{
+  flex:1;padding:9px;text-align:center;border-radius:8px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--text2);border:none;background:none;
+  transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.atab.on{background:var(--gold);color:#000;}
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-size:11px;font-weight:600;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;
+}
+.field input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:all .2s;
+}
+.field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,192,64,.1);}
+.field input::placeholder{color:var(--text3);}
+.field .err{font-size:11px;color:var(--red);margin-top:4px;display:none;}
+.field.has-error input{border-color:var(--red);}
+.field.has-error .err{display:block;}
+.btn-gold{
+  width:100%;padding:13px;background:var(--gold);color:#000;border:none;border-radius:11px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;
+  transition:all .2s;margin-top:6px;position:relative;overflow:hidden;
+}
+.btn-gold::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);pointer-events:none;}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--gold-glow);}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+.or-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text3);font-size:11px;}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.btn-discord{
+  width:100%;padding:12px;background:#5865F2;color:#fff;border:none;border-radius:11px;
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;
+}
+.btn-discord:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(88,101,242,.4);}
+.auth-note{
+  background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.15);
+  border-radius:9px;padding:12px 14px;margin:14px 0;
+  font-size:12px;color:var(--text2);text-align:center;line-height:1.5;
+}
+.auth-note strong{color:var(--cyan);}
+.forgot-link{
+  text-align:center;margin-top:12px;font-size:12px;color:var(--text2);cursor:pointer;
+}
+.forgot-link:hover{color:var(--gold);}
+
+/* ── SPINNER ── */
+.spin{
+  width:18px;height:18px;border:2px solid rgba(0,0,0,.2);
+  border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;
+  display:inline-block;vertical-align:middle;margin-right:6px;
+}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
+#app.on{display:flex;animation:fadeIn .5s ease;}
+
+/* ── HEADER ── */
+header{
+  height:58px;background:rgba(12,16,24,.96);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 18px;gap:16px;position:sticky;top:0;z-index:200;
+}
+.logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:-.5px;white-space:nowrap;}
+.logo em{color:var(--gold);font-style:normal;}
+.nav{display:flex;gap:2px;flex:1;overflow-x:auto;}
+.nav::-webkit-scrollbar{display:none;}
+.nbtn{
+  padding:6px 13px;border-radius:7px;border:none;background:none;
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.nbtn:hover{color:var(--text);background:var(--bg3);}
+.nbtn.on{background:var(--bg3);color:var(--gold);}
+.hright{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.bal-pill{
+  display:flex;align-items:center;gap:7px;background:var(--bg3);
+  border:1px solid var(--border);border-radius:9px;padding:6px 13px;cursor:pointer;
+  transition:all .2s;
+}
+.bal-pill:hover{border-color:var(--gold);}
+.bal-pill .coin{
+  width:16px;height:16px;border-radius:50%;
+  background:linear-gradient(135deg,#f7931a,#e07800);
+  font-size:9px;font-weight:700;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.bal-pill .amt{font-family:'Space Mono',monospace;font-size:12.5px;}
+.btn-dep{
+  padding:7px 16px;background:var(--gold);color:#000;border:none;
+  border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-dep:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--gold-glow);}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#000;
+  cursor:pointer;border:2px solid var(--border);transition:border-color .2s;
+  position:relative;
+}
+.avatar:hover{border-color:var(--gold);}
+.avatar .role-dot{
+  position:absolute;bottom:-1px;right:-1px;
+  width:9px;height:9px;border-radius:50%;border:2px solid var(--bg2);
+  background:var(--green);
+}
+
+/* ── TICKER ── */
+.ticker{background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 0;overflow:hidden;}
+.ticker-inner{display:inline-flex;gap:36px;animation:ticker 25s linear infinite;white-space:nowrap;}
+.tick-item{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;}
+.tick-item .tc{color:var(--gold);font-weight:700;font-family:'Space Mono',monospace;}
+.tick-item .tp{color:var(--text);font-family:'Space Mono',monospace;}
+.tick-item .td.up{color:var(--green);}
+.tick-item .td.dn{color:var(--red);}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 310px;flex:1;overflow:hidden;}
+
+/* ── GAME AREA ── */
+.game-area{
+  overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;
+  max-height:calc(100vh - 90px);
+}
+
+/* ── GAME CARD ── */
+.game-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.gtabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);}
+.gtab{
+  padding:13px 18px;font-size:13px;font-weight:600;color:var(--text2);
+  cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;
+  transition:color .15s;position:relative;
+}
+.gtab.on{color:var(--gold);}
+.gtab.on::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+.gbody{padding:22px;}
+
+/* ── SLIDE DISPLAY ── */
+.slide-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.recent-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;min-height:22px;}
+.rchip{
+  padding:3px 9px;border-radius:5px;font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;transition:all .3s;
+}
+.rchip.h{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25);}
+.rchip.m{background:rgba(240,192,64,.12);color:var(--gold);border:1px solid rgba(240,192,64,.25);}
+.rchip.l{background:rgba(244,63,94,.12);color:var(--red);border:1px solid rgba(244,63,94,.25);}
+.mult-big{
+  font-family:'Syne',sans-serif;font-size:80px;font-weight:800;letter-spacing:-3px;
+  color:var(--gold);text-shadow:0 0 40px var(--gold-glow);min-width:220px;text-align:center;
+  transition:color .3s;line-height:1;
+}
+.mult-big.crashed{color:var(--red);text-shadow:0 0 40px var(--red-glow);animation:crashShake .4s ease;}
+.mult-big.waiting{color:var(--text3);text-shadow:none;font-size:60px;}
+.game-status{
+  font-size:11px;color:var(--text2);text-transform:uppercase;
+  letter-spacing:2px;font-family:'Space Mono',monospace;
+}
+.track{width:100%;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;}
+.track-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--gold));
+  transition:width .08s linear;position:relative;
+}
+.track-fill::after{
+  content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);
+  width:10px;height:10px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 8px var(--gold-glow);
+}
+.live-bets-row{width:100%;display:flex;flex-wrap:wrap;gap:6px;min-height:28px;justify-content:center;}
+.lbet-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  padding:4px 9px;font-size:11px;transition:all .3s;
+}
+.lbet-chip .lbu{font-weight:600;}
+.lbet-chip.win{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06);}
+.lbet-chip.lost{opacity:.4;}
+
+/* ── BET PANEL ── */
+.bet-panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;}
+.bet-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.bfield label{
+  display:block;font-size:10.5px;font-weight:600;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;
+}
+.binput{
+  display:flex;align-items:center;background:var(--bg2);
+  border:1px solid var(--border);border-radius:9px;overflow:hidden;
+  transition:border-color .2s;
+}
+.binput:focus-within{border-color:var(--gold);}
+.binput input{
+  flex:1;background:none;border:none;padding:10px 13px;color:var(--text);
+  font-family:'Space Mono',monospace;font-size:13px;outline:none;
+}
+.binput .badge{padding:0 11px;font-size:10px;font-weight:700;font-family:'Space Mono',monospace;}
+.qbtns{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.qbtn{
+  padding:4px 8px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:5px;color:var(--text2);font-size:10px;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:'Space Mono',monospace;
+}
+.qbtn:hover{border-color:var(--gold);color:var(--gold);}
+.btn-bet{
+  width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;border:none;border-radius:11px;font-family:'Syne',sans-serif;
+  font-weight:800;font-size:15px;cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.btn-bet::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent);pointer-events:none;}
+.btn-bet:hover{transform:translateY(-1px);box-shadow:0 8px 24px var(--gold-glow);}
+.btn-bet:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-cashout{
+  width:100%;padding:14px;background:linear-gradient(135deg,var(--green),#15803d);
+  color:#fff;border:none;border-radius:11px;font-family:'Syne',sans-serif;
+  font-weight:800;font-size:15px;cursor:pointer;transition:all .2s;
+  animation:pulseGlow 1.5s ease-in-out infinite;
+}
+.btn-cashout:hover{transform:translateY(-1px);box-shadow:0 8px 24px var(--green-glow);}
+
+/* ── STATS ROW ── */
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+}
+.scell{background:var(--panel);padding:13px 14px;text-align:center;}
+.scell .sv{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;}
+.scell .sl{font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-top:2px;}
+.sv.pos{color:var(--green);}
+.sv.neg{color:var(--red);}
+
+/* ── BETS TABLE ── */
+.bets-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg2);
+}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.pills{display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:2px;}
+.pill{
+  padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;
+  color:var(--text2);cursor:pointer;border:none;background:none;transition:all .15s;
+}
+.pill.on{background:var(--bg3);color:var(--text);}
+table{width:100%;border-collapse:collapse;}
+th{
+  padding:9px 16px;font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.7px;text-align:left;
+  border-bottom:1px solid var(--border);background:var(--bg2);
+}
+td{padding:10px 16px;font-size:12.5px;border-bottom:1px solid rgba(26,37,53,.6);}
+tr:hover td{background:rgba(255,255,255,.015);}
+.ucell{display:flex;align-items:center;gap:7px;}
+.udot{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#000;flex-shrink:0;
+}
+.mono{font-family:'Space Mono',monospace;}
+.win-text{color:var(--green);font-family:'Space Mono',monospace;font-weight:700;}
+.loss-text{color:var(--red);font-family:'Space Mono',monospace;}
+.row-new td{animation:slideIn .25s ease;background:rgba(240,192,64,.025);}
+
+/* ── CHAT SIDEBAR ── */
+.chat{
+  background:var(--bg2);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;height:calc(100vh - 90px);
+  position:sticky;top:90px;
+}
+.chat-head{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  background:var(--panel);display:flex;align-items:center;gap:8px;
+}
+.chat-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1;}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px var(--green-glow);
+  animation:pulseGlow 2s ease-in-out infinite;
+}
+.online{font-size:11px;color:var(--text2);}
+.rain-btn{
+  padding:4px 10px;background:rgba(34,211,238,.08);
+  border:1px solid rgba(34,211,238,.25);border-radius:7px;
+  color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;
+}
+.rain-btn:hover{background:rgba(34,211,238,.15);}
+.messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:1px;}
+.cmsg{padding:6px 9px;border-radius:7px;transition:background .1s;animation:slideIn .25s ease;}
+.cmsg:hover{background:rgba(255,255,255,.025);}
+.cmsg-head{display:flex;align-items:center;gap:5px;margin-bottom:2px;}
+.cmsg .uname{font-size:12px;font-weight:600;cursor:pointer;}
+.cmsg .uname:hover{text-decoration:underline;}
+.cmsg .badge{
+  padding:1px 5px;border-radius:3px;font-size:8.5px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+}
+.b-owner{background:var(--gold);color:#000;}
+.b-mod{background:var(--purple);color:#fff;}
+.b-vip{background:linear-gradient(90deg,var(--gold),var(--purple));color:#fff;}
+.b-system{background:var(--cyan);color:#000;}
+.cmsg .mtime{font-size:9.5px;color:var(--text3);margin-left:auto;}
+.cmsg .mtext{font-size:12.5px;color:var(--text2);line-height:1.4;word-break:break-word;}
+.cmsg.owner-msg{background:rgba(240,192,64,.04);border-left:2px solid var(--gold);}
+.cmsg.system-msg{background:rgba(34,211,238,.04);border-left:2px solid var(--cyan);}
+.chat-foot{padding:12px;border-top:1px solid var(--border);background:var(--panel);}
+.cinput-row{display:flex;gap:7px;align-items:center;}
+.cinput{
+  flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:13px;outline:none;transition:border-color .2s;
+}
+.cinput:focus{border-color:var(--gold);}
+.cinput::placeholder{color:var(--text3);}
+.csend{
+  width:36px;height:36px;background:var(--gold);border:none;border-radius:9px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;color:#000;
+}
+.csend:hover{transform:scale(1.06);box-shadow:0 4px 12px var(--gold-glow);}
+.chat-actions{display:flex;gap:5px;margin-top:7px;}
+.cact{
+  flex:1;padding:5px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text2);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.cact:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* ── MODALS ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(4,6,10,.92);
+  backdrop-filter:blur(14px);z-index:500;
+  display:none;align-items:center;justify-content:center;
+}
+.overlay.on{display:flex;animation:fadeIn .25s ease;}
+.modal{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:18px;width:460px;max-width:95vw;
+  animation:slideUp .35s cubic-bezier(.34,1.3,.64,1);
+  position:relative;overflow:hidden;
+}
+.modal::before{
+  content:'';position:absolute;top:-1px;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+}
+.mhead{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 22px 16px;border-bottom:1px solid var(--border);
+}
+.mtitle{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+.mclose{
+  width:30px;height:30px;border-radius:7px;background:var(--bg2);
+  border:1px solid var(--border);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;
+}
+.mclose:hover{color:var(--text);border-color:var(--text2);}
+.mbody{padding:20px 22px;}
+.coin-select{display:flex;gap:7px;margin-bottom:18px;}
+.copt{
+  flex:1;padding:11px 8px;border:2px solid var(--border);border-radius:11px;
+  cursor:pointer;text-align:center;transition:all .15s;background:var(--bg2);
+}
+.copt:hover{border-color:var(--gold);}
+.copt.on{border-color:var(--gold);background:rgba(240,192,64,.07);}
+.copt .csym{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);}
+.copt .cname{font-size:10px;color:var(--text2);margin-top:1px;}
+.addr-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:11px;padding:14px;margin-bottom:14px;
+}
+.addr-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.addr-row{display:flex;align-items:center;gap:8px;}
+.addr-text{
+  font-family:'Space Mono',monospace;font-size:10.5px;color:var(--cyan);
+  word-break:break-all;flex:1;line-height:1.5;
+}
+.copy-btn{
+  padding:7px 12px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;
+  transition:all .15s;flex-shrink:0;white-space:nowrap;
+}
+.copy-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.copy-btn.ok{border-color:var(--green);color:var(--green);}
+.dep-info{
+  background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.18);
+  border-radius:9px;padding:11px 13px;font-size:11.5px;color:var(--text2);line-height:1.5;
+}
+.dep-info strong{color:var(--cyan);}
+
+/* ── TOASTS ── */
+#toasts{
+  position:fixed;bottom:20px;right:20px;z-index:2000;
+  display:flex;flex-direction:column;gap:7px;pointer-events:none;
+}
+.toast{
+  background:var(--panel);border:1px solid var(--border);border-radius:11px;
+  padding:11px 14px;display:flex;align-items:center;gap:9px;
+  font-size:13px;max-width:300px;animation:toastIn .3s ease;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);pointer-events:auto;
+}
+.toast.s{border-color:rgba(34,197,94,.4);}
+.toast.e{border-color:rgba(244,63,94,.4);}
+.toast.i{border-color:rgba(34,211,238,.4);}
+.toast.w{border-color:rgba(240,192,64,.4);}
+.toast .ti{font-size:15px;flex-shrink:0;}
+.toast .tm{flex:1;color:var(--text);}
+.toast .tx{color:var(--text3);cursor:pointer;font-size:13px;padding:2px;}
+.toast .tx:hover{color:var(--text);}
+
+/* ── WIN FLASH ── */
+#wflash{
+  position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:rgba(34,197,94,.06);display:none;
+}
+@keyframes wf{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+#wflash.on{display:block;animation:wf .5s ease forwards;}
+
+/* ── CRASH PARTICLES ── */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:80;overflow:hidden;}
+.particle{
+  position:absolute;top:-20px;font-size:14px;
+  animation:pfall linear forwards;opacity:1;
+}
+@keyframes pfall{to{transform:translateY(105vh) rotate(540deg);opacity:0;}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;}
+  .chat{height:320px;position:static;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .bet-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ AUTH ═══════════════════════════════════════ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="wordmark">Vault<em>Bet</em></div>
+      <p>Real-time provably fair crypto casino</p>
+    </div>
+    <div class="auth-tabs" id="authTabs">
+      <button class="atab on" onclick="showTab('login')">Sign In</button>
+      <button class="atab" onclick="showTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPanel">
+      <div class="field" id="f-li-user">
+        <label>Username or Email</label>
+        <input type="text" id="li-user" placeholder="Enter your username or email" autocomplete="username">
+        <div class="err" id="e-li-user"></div>
+      </div>
+      <div class="field" id="f-li-pass">
+        <label>Password</label>
+        <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="err" id="e-li-pass"></div>
+      </div>
+      <button class="btn-gold" id="loginBtn" onclick="doLogin()">Sign In to VaultBet</button>
+      <div class="forgot-link" onclick="showForgot()">Forgot password?</div>
+      <div class="or-divider">or continue with</div>
+      <button class="btn-discord" onclick="discordLogin()">
+        <svg width="18" height="14" viewBox="0 0 71 55" fill="none"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.7a40.2 40.2 0 0 0-1.8 3.6 54 54 0 0 0-16.2 0A38.3 38.3 0 0 0 25.5.7a58.4 58.4 0 0 0-14.8 4.2C1.5 18.2-1 31 .3 43.7a59 59 0 0 0 18 9.1 43.3 43.3 0 0 0 3.8-6.2 38.3 38.3 0 0 1-6-2.9l1.5-1.1a42.1 42.1 0 0 0 36.1 0l1.5 1.1a38.4 38.4 0 0 1-6 2.9 43 43 0 0 0 3.7 6.2 58.8 58.8 0 0 0 18-9.1C72 29.4 68.5 16.7 60.1 4.9ZM23.7 36.3c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.1 6.4-7.1 6.5 3.2 6.4 7.1c0 3.9-2.8 7.1-6.4 7.1Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.1 6.4-7.1 6.5 3.2 6.4 7.1c0 3.9-2.8 7.1-6.4 7.1Z" fill="currentColor"/></svg>
+        Continue with Discord
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPanel" style="display:none">
+      <div class="field" id="f-ru">
+        <label>Username</label>
+        <input type="text" id="r-user" placeholder="3-20 chars, letters/numbers/underscore" autocomplete="username">
+        <div class="err" id="e-ru"></div>
+      </div>
+      <div class="field" id="f-re">
+        <label>Email Address</label>
+        <input type="email" id="r-email" placeholder="your@email.com" autocomplete="email">
+        <div class="err" id="e-re"></div>
+      </div>
+      <div class="field" id="f-rp">
+        <label>Password</label>
+        <input type="password" id="r-pass" placeholder="Min 8 characters" autocomplete="new-password">
+        <div class="err" id="e-rp"></div>
+      </div>
+      <div class="field" id="f-rp2">
+        <label>Confirm Password</label>
+        <input type="password" id="r-pass2" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+        <div class="err" id="e-rp2"></div>
+      </div>
+      <div class="auth-note">
+        📧 A verification email will be sent.<br>
+        <strong>No KYC required.</strong> Anonymous play supported.
+      </div>
+      <button class="btn-gold" id="regBtn" onclick="doRegister()">Create Account</button>
+      <div class="or-divider">or</div>
+      <button class="btn-discord" onclick="discordLogin()">
+        <svg width="18" height="14" viewBox="0 0 71 55" fill="none"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.7a40.2 40.2 0 0 0-1.8 3.6 54 54 0 0 0-16.2 0A38.3 38.3 0 0 0 25.5.7a58.4 58.4 0 0 0-14.8 4.2C1.5 18.2-1 31 .3 43.7a59 59 0 0 0 18 9.1 43.3 43.3 0 0 0 3.8-6.2 38.3 38.3 0 0 1-6-2.9l1.5-1.1a42.1 42.1 0 0 0 36.1 0l1.5 1.1a38.4 38.4 0 0 1-6 2.9 43 43 0 0 0 3.7 6.2 58.8 58.8 0 0 0 18-9.1C72 29.4 68.5 16.7 60.1 4.9ZM23.7 36.3c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.1 6.4-7.1 6.5 3.2 6.4 7.1c0 3.9-2.8 7.1-6.4 7.1Zm23.6 0c-3.5 0-6.4-3.2-6.4-7.1s2.8-7.1 6.4-7.1 6.5 3.2 6.4 7.1c0 3.9-2.8 7.1-6.4 7.1Z" fill="currentColor"/></svg>
+        Register with Discord
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ APP ═══════════════════════════════════════ -->
+<div id="app">
+  <header>
+    <div class="logo">Vault<em>Bet</em></div>
+    <nav class="nav">
+      <button class="nbtn on">⚡ Slide</button>
+      <button class="nbtn" onclick="toast('i','More games coming soon!')">🎰 Roulette</button>
+      <button class="nbtn" onclick="toast('i','More games coming soon!')">🎲 Dice</button>
+      <button class="nbtn" onclick="toast('i','More games coming soon!')">🪙 Flip</button>
+    </nav>
+    <div class="hright">
+      <div class="bal-pill" onclick="openDeposit()">
+        <div class="coin">₿</div>
+        <span class="amt" id="balDisplay">0.00000000</span>
+      </div>
+      <button class="btn-dep" onclick="openDeposit()">+ Deposit</button>
+      <div class="avatar" id="avt" onclick="toggleProfile()">
+        <span id="avtLetter">?</span>
+        <span class="role-dot" id="roleDot"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker">
+    <div class="ticker-inner" id="tickerInner"></div>
+  </div>
+
+  <div class="layout">
+    <!-- GAME -->
+    <div class="game-area">
+
+      <div class="game-card">
+        <div class="gtabs">
+          <button class="gtab on">⚡ Slide</button>
+        </div>
+        <div class="gbody">
+          <div class="slide-wrap">
+            <div class="recent-row" id="recentRow"></div>
+            <div class="mult-big waiting" id="multBig">—</div>
+            <div class="game-status" id="gameStatus">CONNECTING...</div>
+            <div class="track"><div class="track-fill" id="trackFill" style="width:0%"></div></div>
+            <div class="live-bets-row" id="liveBetsRow"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bet-panel">
+        <div class="bet-grid">
+          <div class="bfield">
+            <label>Bet Amount (USD)</label>
+            <div class="binput">
+              <input type="number" id="betAmt" value="1.00" min="0.01" step="0.01">
+              <div class="badge" style="color:var(--gold)">USD</div>
+            </div>
+            <div class="qbtns">
+              <button class="qbtn" onclick="setAmt(0.5)">$0.5</button>
+              <button class="qbtn" onclick="setAmt(1)">$1</button>
+              <button class="qbtn" onclick="setAmt(5)">$5</button>
+              <button class="qbtn" onclick="setAmt(10)">$10</button>
+              <button class="qbtn" onclick="setAmt(25)">$25</button>
+              <button class="qbtn" onclick="setAmt(100)">$100</button>
+            </div>
+          </div>
+          <div class="bfield">
+            <label>Auto Cashout (×)</label>
+            <div class="binput">
+              <input type="number" id="autoC" value="2.00" min="1.01" step="0.01">
+              <div class="badge" style="color:var(--cyan)">×</div>
+            </div>
+            <div class="qbtns">
+              <button class="qbtn" onclick="setAuto(1.5)">1.5×</button>
+              <button class="qbtn" onclick="setAuto(2)">2×</button>
+              <button class="qbtn" onclick="setAuto(3)">3×</button>
+              <button class="qbtn" onclick="setAuto(5)">5×</button>
+              <button class="qbtn" onclick="setAuto(10)">10×</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-bet" id="betBtn" onclick="sendBet()">PLACE BET</button>
+        <button class="btn-cashout" id="cashoutBtn" style="display:none" onclick="sendCashout()">
+          💸 CASH OUT — <span id="coVal">1.00×</span>
+        </button>
+      </div>
+
+      <div class="stats-row">
+        <div class="scell"><div class="sv" id="sBets">0</div><div class="sl">Bets</div></div>
+        <div class="scell"><div class="sv" id="sWins">0</div><div class="sl">Wins</div></div>
+        <div class="scell"><div class="sv" id="sWagered">$0</div><div class="sl">Wagered</div></div>
+        <div class="scell"><div class="sv" id="sProfit">$0</div><div class="sl">Profit</div></div>
+      </div>
+
+      <div class="bets-card">
+        <div class="card-header">
+          <div class="card-title">Live Bets</div>
+          <div class="pills">
+            <button class="pill on" onclick="betTab('all',this)">All</button>
+            <button class="pill" onclick="betTab('mine',this)">Mine</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Bet</th>
+              <th>Multiplier</th>
+              <th>Payout</th>
+            </tr>
+          </thead>
+          <tbody id="betsBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat">
+      <div class="chat-head">
+        <div class="dot"></div>
+        <div class="chat-title">Live Chat</div>
+        <div class="online" id="onlineCt">0 online</div>
+        <button class="rain-btn" onclick="openRain()">🌧 Rain</button>
+      </div>
+      <div class="messages" id="msgBox"></div>
+      <div class="chat-foot">
+        <div class="cinput-row">
+          <input class="cinput" id="chatIn" placeholder="Message..." maxlength="200"
+            onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="csend" onclick="sendMsg()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chat-actions">
+          <button class="cact" onclick="openTip()">💸 Tip</button>
+          <button class="cact" onclick="openRain()">🌧 Rain</button>
+          <button class="cact" onclick="openDeposit()">₿ Deposit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div class="overlay" id="depModal">
+  <div class="modal">
+    <div class="mhead">
+      <div class="mtitle">💎 Deposit Crypto</div>
+      <button class="mclose" onclick="closeDeposit()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="coin-select">
+        <div class="copt on" onclick="selCoin('btc',this)">
+          <div class="csym">₿ BTC</div><div class="cname">Bitcoin</div>
+        </div>
+        <div class="copt" onclick="selCoin('ltc',this)">
+          <div class="csym">Ł LTC</div><div class="cname">Litecoin</div>
+        </div>
+        <div class="copt" onclick="selCoin('eth',this)">
+          <div class="csym">Ξ ETH</div><div class="cname">Ethereum</div>
+        </div>
+      </div>
+      <div class="addr-box">
+        <div class="addr-lbl">Your Deposit Address</div>
+        <div class="addr-row">
+          <div class="addr-text" id="depAddr">Loading...</div>
+          <button class="copy-btn" id="cpyBtn" onclick="copyAddr()">Copy</button>
+        </div>
+      </div>
+      <div class="dep-info">
+        <strong>⚡ Instant credit</strong> after 1 network confirmation.<br>
+        Deposits are credited automatically — no need to contact support.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIP MODAL -->
+<div class="overlay" id="tipModal">
+  <div class="modal" style="width:360px">
+    <div class="mhead">
+      <div class="mtitle">💸 Tip a Player</div>
+      <button class="mclose" onclick="closeTip()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="tipUser" placeholder="Enter exact username">
+      </div>
+      <div class="field">
+        <label>Amount (USD)</label>
+        <div class="binput">
+          <input type="number" id="tipAmt" value="1.00" min="0.01" step="0.01">
+          <div class="badge" style="color:var(--gold)">USD</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-gold" onclick="sendTip()" style="flex:1">Send Tip</button>
+        <button onclick="closeTip()" style="flex:1;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:14px">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RAIN MODAL -->
+<div class="overlay" id="rainModal">
+  <div class="modal" style="width:360px">
+    <div class="mhead">
+      <div class="mtitle">🌧 Rain on Everyone</div>
+      <button class="mclose" onclick="closeRain()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="auth-note">
+        Rain splits your amount equally among all online players right now.
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Total Amount (USD)</label>
+        <div class="binput">
+          <input type="number" id="rainAmt" value="5.00" min="1.00" step="0.01">
+          <div class="badge" style="color:var(--cyan)">USD</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-gold" onclick="sendRain()" style="flex:1;background:var(--cyan);color:#000">🌧 Rain!</button>
+        <button onclick="closeRain()" style="flex:1;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:14px">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="wflash"></div>
+<div id="particles"></div>
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════ STATE ═══════════════════════════
+const S = {
+  user: null,
+  balance: 0,
+  ws: null,
+  wsReady: false,
+  gamePhase: 'waiting',
+  currentMult: 1.0,
+  hasBet: false,
+  hasCashedOut: false,
+  liveBets: new Map(),
+  recentRounds: [],
+  betTab: 'all',
+  currentCoin: 'btc',
+  depAddresses: {},
+  reconnectDelay: 1000,
+};
+
+// ═══════════════════════════ AUTH ═══════════════════════════
+function showTab(t) {
+  const tabs = document.querySelectorAll('.atab');
+  tabs[0].classList.toggle('on', t === 'login');
+  tabs[1].classList.toggle('on', t === 'register');
+  document.getElementById('loginPanel').style.display = t === 'login' ? '' : 'none';
+  document.getElementById('registerPanel').style.display = t === 'register' ? '' : 'none';
+}
+
+function fieldErr(id, msg) {
+  const f = document.getElementById('f-' + id);
+  const e = document.getElementById('e-' + id);
+  if (msg) { f?.classList.add('has-error'); if(e) e.textContent = msg; }
+  else { f?.classList.remove('has-error'); }
+}
+
+function clearErrs(...ids) { ids.forEach(id => fieldErr(id, '')); }
+
+async function doLogin() {
+  clearErrs('li-user','li-pass');
+  const user = document.getElementById('li-user').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  if (!user) return fieldErr('li-user','Required');
+  if (!pass) return fieldErr('li-pass','Required');
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Signing in...';
+
+  try {
+    const r = await fetch('/auth/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: user, password: pass }),
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      btn.disabled = false; btn.textContent = 'Sign In to VaultBet';
+      return fieldErr('li-pass', d.error || 'Login failed');
+    }
+    startApp(d.user);
+  } catch {
+    btn.disabled = false; btn.textContent = 'Sign In to VaultBet';
+    toast('e','Network error. Try again.');
+  }
+}
+
+async function doRegister() {
+  clearErrs('ru','re','rp','rp2');
+  const username = document.getElementById('r-user').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass = document.getElementById('r-pass').value;
+  const pass2 = document.getElementById('r-pass2').value;
+
+  let ok = true;
+  if (!username) { fieldErr('ru','Required'); ok = false; }
+  else if (username.length < 3) { fieldErr('ru','Min 3 characters'); ok = false; }
+  if (!email || !email.includes('@')) { fieldErr('re','Valid email required'); ok = false; }
+  if (!pass || pass.length < 8) { fieldErr('rp','Min 8 characters'); ok = false; }
+  if (pass !== pass2) { fieldErr('rp2','Passwords do not match'); ok = false; }
+  if (!ok) return;
+
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Creating account...';
+
+  try {
+    const r = await fetch('/auth/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, email, password: pass }),
+    });
+    const d = await r.json();
+    btn.disabled = false; btn.textContent = 'Create Account';
+    if (!d.ok) return toast('e', d.error || 'Registration failed');
+    toast('s','Account created! Check your email to verify 📧');
+    showTab('login');
+  } catch {
+    btn.disabled = false; btn.textContent = 'Create Account';
+    toast('e','Network error. Try again.');
+  }
+}
+
+function discordLogin() {
+  window.location.href = '/auth/discord';
+}
+
+function showForgot() {
+  const email = prompt('Enter your email address:');
+  if (!email) return;
+  fetch('/auth/forgot', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email }),
+  }).then(r => r.json()).then(d => {
+    toast('i', d.message || 'If that email exists, a reset link was sent.');
+  });
+}
+
+async function checkSession() {
+  try {
+    const r = await fetch('/auth/me');
+    const d = await r.json();
+    if (d.ok) startApp(d.user);
+  } catch {}
+}
+
+// ═══════════════════════════ APP START ═══════════════════════════
+function startApp(user) {
+  S.user = user;
+  S.balance = user.balance || 0;
+
+  document.getElementById('authOverlay').style.opacity = '0';
+  document.getElementById('authOverlay').style.transition = 'opacity .35s';
+  setTimeout(() => {
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+  }, 350);
+
+  document.getElementById('avtLetter').textContent = user.username[0].toUpperCase();
+  document.getElementById('roleDot').style.background =
+    user.role === 'owner' ? 'var(--gold)' :
+    user.role === 'mod' ? 'var(--purple)' : 'var(--green)';
+
+  updateBal(S.balance);
+  connectWS();
+  initTicker();
+  toast('s', `Welcome, ${user.username}! 🎰`);
+
+  // Check URL params (verify email, errors)
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('verified')) toast('s', 'Email verified! Welcome to VaultBet 🎉');
+  if (p.get('error')) toast('e', 'Something went wrong. Try again.');
+  history.replaceState({}, '', '/');
+}
+
+// ═══════════════════════════ WEBSOCKET ═══════════════════════════
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  S.ws = new WebSocket(`${proto}://${location.host}`);
+
+  S.ws.onopen = () => {
+    S.wsReady = true;
+    S.reconnectDelay = 1000;
+    // Authenticate over WebSocket
+    wsSend({ type: 'auth', userId: S.user.id, username: S.user.username, role: S.user.role });
+    document.getElementById('gameStatus').textContent = 'CONNECTED';
+  };
+
+  S.ws.onmessage = (ev) => {
+    try { handleWS(JSON.parse(ev.data)); } catch(e) { console.error(e); }
+  };
+
+  S.ws.onclose = () => {
+    S.wsReady = false;
+    document.getElementById('gameStatus').textContent = 'RECONNECTING...';
+    setTimeout(connectWS, S.reconnectDelay);
+    S.reconnectDelay = Math.min(S.reconnectDelay * 2, 10000);
+  };
+
+  S.ws.onerror = () => S.ws.close();
+}
+
+function wsSend(obj) {
+  if (S.wsReady && S.ws.readyState === 1) S.ws.send(JSON.stringify(obj));
+}
+
+// ═══════════════════════════ WS MESSAGE HANDLER ═══════════════════════════
+function handleWS(msg) {
+  switch (msg.type) {
+
+    case 'init':
+      applyState(msg.state);
+      break;
+
+    case 'phase':
+      S.gamePhase = msg.phase;
+      S.liveBets.clear();
+      renderLiveBets();
+      S.hasBet = false;
+      S.hasCashedOut = false;
+
+      if (msg.phase === 'waiting') {
+        setMult('—', 'waiting');
+        document.getElementById('gameStatus').textContent = 'WAITING FOR NEXT ROUND';
+        setTrack(0);
+        showBetBtn();
+        document.getElementById('betBtn').disabled = false;
+      } else if (msg.phase === 'betting') {
+        setMult('BETTING', 'waiting');
+        document.getElementById('gameStatus').textContent = `PLACE YOUR BET — ${msg.countdown}s`;
+        startBettingCountdown(msg.countdown);
+      } else if (msg.phase === 'running') {
+        setMult('1.00×', '');
+        document.getElementById('gameStatus').textContent = 'ROUND LIVE';
+        // Populate live bets from initial state
+        if (msg.bets) msg.bets.forEach(b => S.liveBets.set(b.username, b));
+        renderLiveBets();
+      }
+      break;
+
+    case 'mult':
+      S.currentMult = msg.mult;
+      setMult(msg.mult.toFixed(2) + '×', '');
+      setTrack(Math.min(((msg.mult - 1) / 9) * 100, 95));
+      if (S.hasBet && !S.hasCashedOut) {
+        document.getElementById('coVal').textContent = msg.mult.toFixed(2) + '×';
+      }
+      break;
+
+    case 'crashed':
+      S.gamePhase = 'crashed';
+      setMult(msg.crashPoint.toFixed(2) + '×', 'crashed');
+      document.getElementById('gameStatus').textContent = '💥 CRASHED';
+      setTrack(100);
+      showBetBtn();
+      if (S.hasBet && !S.hasCashedOut) {
+        toast('e', `Crashed at ${msg.crashPoint.toFixed(2)}× 💀`);
+        spawnParticles();
+      }
+      addToRecent(msg.crashPoint);
+      betsBody_update(msg);
+      break;
+
+    case 'betPlaced':
+      S.liveBets.set(msg.username, { username: msg.username, role: msg.role, amountSats: msg.amountSats });
+      renderLiveBets();
+      break;
+
+    case 'cashout':
+      const lb = S.liveBets.get(msg.username);
+      if (lb) { lb.cashedOut = true; lb.mult = msg.mult; }
+      renderLiveBets();
+      break;
+
+    case 'betOk':
+      S.hasBet = true;
+      S.hasCashedOut = false;
+      updateBal(msg.balance);
+      showCashoutBtn();
+      document.getElementById('coVal').textContent = '1.00×';
+      break;
+
+    case 'cashoutOk':
+      S.hasCashedOut = true;
+      updateBal(msg.balance);
+      showBetBtn();
+      const profit = (msg.payoutSats - (S.liveBets.get(S.user.username)?.amountSats || 0)) / 100;
+      toast('s', `Cashed out at ${msg.mult.toFixed(2)}× 🎉 +$${Math.abs(profit).toFixed(2)}`);
+      winFlash();
+      break;
+
+    case 'balance':
+      updateBal(msg.balance);
+      break;
+
+    case 'stats':
+      if (msg.stats) {
+        document.getElementById('sBets').textContent = msg.stats.total_bets || 0;
+        document.getElementById('sWins').textContent = msg.stats.wins || 0;
+        document.getElementById('sWagered').textContent = '$' + ((msg.stats.wagered || 0)/100).toFixed(2);
+        const p = (msg.stats.profit || 0)/100;
+        const pe = document.getElementById('sProfit');
+        pe.textContent = (p >= 0 ? '+' : '') + '$' + p.toFixed(2);
+        pe.className = 'sv ' + (p >= 0 ? 'pos' : 'neg');
+      }
+      break;
+
+    case 'chat':
+      appendChat(msg);
+      break;
+
+    case 'chatHistory':
+      const box = document.getElementById('msgBox');
+      box.innerHTML = '';
+      msg.messages.forEach(m => appendChat(m, false));
+      box.scrollTop = box.scrollHeight;
+      break;
+
+    case 'tipOk':
+      updateBal(msg.balance);
+      toast('s', 'Tip sent! 💸');
+      closeTip();
+      break;
+
+    case 'tipReceived':
+      updateBal(msg.balance);
+      toast('s', `${msg.from} tipped you $${(msg.amountSats/100).toFixed(2)}! 💸`);
+      break;
+
+    case 'rainOk':
+      updateBal(msg.balance);
+      toast('s', `Rain sent to ${msg.recipients} players! 🌧`);
+      closeRain();
+      break;
+
+    case 'rainReceived':
+      updateBal(msg.balance);
+      toast('i', `🌧 ${msg.from} rained $${(msg.amountSats/100).toFixed(2)} on you!`);
+      break;
+
+    case 'depositConfirmed':
+      updateBal(msg.balance);
+      toast('s', `Deposit confirmed! +$${(msg.amountSats/100).toFixed(2)} credited ✅`);
+      break;
+
+    case 'online':
+      document.getElementById('onlineCt').textContent = msg.count + ' online';
+      break;
+
+    case 'error':
+      toast('e', msg.message);
+      break;
+  }
+}
+
+function applyState(state) {
+  S.gamePhase = state.phase;
+  S.currentMult = state.currentMult || 1;
+  S.recentRounds = state.recentRounds || [];
+  renderRecent();
+
+  state.bets?.forEach(b => S.liveBets.set(b.username, b));
+  renderLiveBets();
+
+  if (state.phase === 'running') {
+    setMult(S.currentMult.toFixed(2) + '×', '');
+    document.getElementById('gameStatus').textContent = 'ROUND LIVE';
+    document.getElementById('betBtn').disabled = true;
+  } else if (state.phase === 'betting') {
+    setMult('BETTING', 'waiting');
+    document.getElementById('gameStatus').textContent = 'PLACE YOUR BET';
+    document.getElementById('betBtn').disabled = false;
+  } else {
+    setMult('—', 'waiting');
+    document.getElementById('gameStatus').textContent = 'WAITING';
+  }
+}
+
+// ═══════════════════════════ BETTING ═══════════════════════════
+function sendBet() {
+  if (S.gamePhase !== 'betting') return toast('w', 'Wait for betting phase!');
+  if (S.hasBet) return toast('w', 'Already bet this round');
+  const amount = parseFloat(document.getElementById('betAmt').value);
+  const autoC = parseFloat(document.getElementById('autoC').value) || null;
+  if (!amount || amount < 0.01) return toast('e', 'Invalid amount');
+  if (amount * 100 > S.balance) return toast('e', 'Insufficient balance');
+  wsSend({ type: 'bet', amount, autoCashout: autoC });
+}
+
+function sendCashout() {
+  if (!S.hasBet || S.hasCashedOut) return;
+  wsSend({ type: 'cashout' });
+}
+
+function showBetBtn() {
+  document.getElementById('betBtn').style.display = '';
+  document.getElementById('cashoutBtn').style.display = 'none';
+}
+
+function showCashoutBtn() {
+  document.getElementById('betBtn').style.display = 'none';
+  document.getElementById('cashoutBtn').style.display = '';
+}
+
+let bettingTimer = null;
+function startBettingCountdown(secs) {
+  clearInterval(bettingTimer);
+  let s = secs;
+  bettingTimer = setInterval(() => {
+    s--;
+    if (s <= 0) { clearInterval(bettingTimer); return; }
+    document.getElementById('gameStatus').textContent = `PLACE YOUR BET — ${s}s`;
+  }, 1000);
+}
+
+// ═══════════════════════════ CHAT ═══════════════════════════
+function appendChat(msg, scroll = true) {
+  const box = document.getElementById('msgBox');
+  const d = document.createElement('div');
+  const isOwner = msg.role === 'owner';
+  const isSys = msg.role === 'system';
+  d.className = 'cmsg' + (isOwner ? ' owner-msg' : '') + (isSys ? ' system-msg' : '');
+
+  const color =
+    msg.role === 'owner' ? 'var(--gold)' :
+    msg.role === 'mod' ? 'var(--purple)' :
+    msg.role === 'system' ? 'var(--cyan)' :
+    'var(--text)';
+
+  const badge =
+    msg.role === 'owner' ? '<span class="badge b-owner">OWNER</span>' :
+    msg.role === 'mod' ? '<span class="badge b-mod">MOD</span>' :
+    msg.role === 'vip' ? '<span class="badge b-vip">VIP</span>' :
+    msg.role === 'system' ? '<span class="badge b-system">SYSTEM</span>' : '';
+
+  const t = msg.time ? new Date(msg.time * 1000) : new Date();
+  const time = t.getHours().toString().padStart(2,'0') + ':' + t.getMinutes().toString().padStart(2,'0');
+
+  d.innerHTML = `
+    <div class="cmsg-head">
+      <span class="uname" style="color:${color}">${esc(msg.username)}</span>
+      ${badge}
+      <span class="mtime">${time}</span>
+    </div>
+    <div class="mtext">${esc(msg.message)}</div>
+  `;
+  box.appendChild(d);
+  if (scroll) box.scrollTop = box.scrollHeight;
+  while (box.children.length > 100) box.removeChild(box.firstChild);
+}
+
+function sendMsg() {
+  const inp = document.getElementById('chatIn');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  if (!S.wsReady) return toast('e', 'Not connected');
+  wsSend({ type: 'chat', message: msg });
+  inp.value = '';
+}
+
+// ═══════════════════════════ TIP / RAIN ═══════════════════════════
+function openTip() { document.getElementById('tipModal').classList.add('on'); }
+function closeTip() { document.getElementById('tipModal').classList.remove('on'); }
+
+function sendTip() {
+  const toUsername = document.getElementById('tipUser').value.trim();
+  const amt = parseFloat(document.getElementById('tipAmt').value);
+  if (!toUsername) return toast('e', 'Enter a username');
+  if (!amt || amt < 0.01) return toast('e', 'Invalid amount');
+  wsSend({ type: 'tip', toUsername, amountSats: Math.round(amt * 100) });
+}
+
+function openRain() { document.getElementById('rainModal').classList.add('on'); }
+function closeRain() { document.getElementById('rainModal').classList.remove('on'); }
+
+function sendRain() {
+  const amt = parseFloat(document.getElementById('rainAmt').value);
+  if (!amt || amt < 1) return toast('e', 'Minimum rain is $1');
+  wsSend({ type: 'rain', totalSats: Math.round(amt * 100) });
+}
+
+// ═══════════════════════════ DEPOSIT ═══════════════════════════
+// In production, generate unique per-user addresses via payment processor API
+const DEMO_ADDRESSES = {
+  btc: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  ltc: 'ltc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el',
+  eth: '0x742d35Cc6634C0532925a3b8D4C9B2dE5b78eF3',
+};
+
+function openDeposit() {
+  document.getElementById('depModal').classList.add('on');
+  document.getElementById('depAddr').textContent = DEMO_ADDRESSES[S.currentCoin];
+}
+function closeDeposit() { document.getElementById('depModal').classList.remove('on'); }
+
+function selCoin(coin, el) {
+  S.currentCoin = coin;
+  document.querySelectorAll('.copt').forEach(o => o.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('depAddr').textContent = DEMO_ADDRESSES[coin];
+  const btn = document.getElementById('cpyBtn');
+  btn.textContent = 'Copy'; btn.className = 'copy-btn';
+}
+
+function copyAddr() {
+  navigator.clipboard.writeText(document.getElementById('depAddr').textContent);
+  const btn = document.getElementById('cpyBtn');
+  btn.textContent = '✓ Copied'; btn.className = 'copy-btn ok';
+  setTimeout(() => { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);
+}
+
+// ═══════════════════════════ DISPLAY HELPERS ═══════════════════════════
+function setMult(text, cls) {
+  const el = document.getElementById('multBig');
+  el.textContent = text;
+  el.className = 'mult-big' + (cls ? ' ' + cls : '');
+}
+
+function setTrack(pct) {
+  document.getElementById('trackFill').style.width = pct + '%';
+}
+
+function updateBal(sats) {
+  S.balance = sats;
+  // Display as USD equivalent (in real app, pull live BTC price)
+  document.getElementById('balDisplay').textContent = '$' + (sats / 100).toFixed(2);
+}
+
+function addToRecent(crash) {
+  S.recentRounds.push(crash);
+  if (S.recentRounds.length > 12) S.recentRounds.shift();
+  renderRecent();
+}
+
+function renderRecent() {
+  document.getElementById('recentRow').innerHTML = S.recentRounds.map(m => {
+    const cls = m < 1.5 ? 'l' : m < 3 ? 'm' : 'h';
+    return `<div class="rchip ${cls}">${m.toFixed(2)}×</div>`;
+  }).join('');
+}
+
+function renderLiveBets() {
+  const row = document.getElementById('liveBetsRow');
+  row.innerHTML = '';
+  S.liveBets.forEach(bet => {
+    const d = document.createElement('div');
+    d.className = 'lbet-chip' + (bet.cashedOut ? ' win' : '');
+    d.innerHTML = `<span class="lbu">${esc(bet.username)}</span>
+      <span style="color:var(--text2)">$${(bet.amountSats/100).toFixed(2)}</span>
+      ${bet.cashedOut ? `<span style="color:var(--green)">${bet.mult?.toFixed(2)}×</span>` : ''}`;
+    row.appendChild(d);
+  });
+}
+
+function betsBody_update(msg) {
+  // Add current round's resolved bets to table
+  const tbody = document.getElementById('betsBody');
+  S.liveBets.forEach(bet => {
+    const tr = document.createElement('tr');
+    tr.className = 'row-new';
+    const won = bet.cashedOut;
+    const payout = won ? (bet.amountSats / 100 * bet.mult) : 0;
+    const color = '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
+    tr.innerHTML = `
+      <td><div class="ucell">
+        <div class="udot" style="background:${color}">${bet.username[0].toUpperCase()}</div>
+        ${esc(bet.username)}
+      </div></td>
+      <td class="mono">$${(bet.amountSats/100).toFixed(2)}</td>
+      <td class="${won?'win-text':'loss-text'}">${won ? bet.mult?.toFixed(2)+'×' : msg.crashPoint.toFixed(2)+'×'}</td>
+      <td class="mono ${won?'pos':''}">${won ? '$'+payout.toFixed(2) : '—'}</td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+    while (tbody.children.length > 25) tbody.removeChild(tbody.lastChild);
+  });
+}
+
+function betTab(mode, btn) {
+  S.betTab = mode;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ═══════════════════════════ EFFECTS ═══════════════════════════
+function winFlash() {
+  const el = document.getElementById('wflash');
+  el.className = 'on';
+  setTimeout(() => el.className = '', 500);
+}
+
+function spawnParticles() {
+  const c = document.getElementById('particles');
+  ['💥','🔥','😭','📉','💸'].forEach((emoji, i) => {
+    for (let j = 0; j < 4; j++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = emoji;
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+      p.style.animationDelay = (Math.random() * 0.8) + 's';
+      c.appendChild(p);
+      setTimeout(() => p.remove(), 4000);
+    }
+  });
+}
+
+// ═══════════════════════════ TICKER ═══════════════════════════
+const TICKERS = [
+  { name:'BTC', price: 23740, chg: 2.4, up: true },
+  { name:'LTC', price: 82.35, chg: -0.8, up: false },
+  { name:'ETH', price: 1642, chg: 3.1, up: true },
+  { name:'BNB', price: 308, chg: 0.5, up: true },
+  { name:'SOL', price: 24.2, chg: 5.2, up: true },
+  { name:'XRP', price: 0.534, chg: -1.2, up: false },
+  { name:'DOGE', price: 0.082, chg: 8.4, up: true },
+];
+
+function initTicker() {
+  const inner = document.getElementById('tickerInner');
+  const html = [...TICKERS, ...TICKERS].map(t =>
+    `<div class="tick-item">
+      <span class="tc">${t.name}</span>
+      <span class="tp">$${fmt(t.price)}</span>
+      <span class="td ${t.up?'up':'dn'}">${t.up?'+':''}${t.chg}%</span>
+    </div>`
+  ).join('');
+  inner.innerHTML = html;
+}
+
+function fmt(n) {
+  if (n >= 1000) return n.toLocaleString('en',{maximumFractionDigits:2});
+  if (n >= 1) return n.toFixed(2);
+  return n.toFixed(4);
+}
+
+// ═══════════════════════════ UTILITIES ═══════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setAmt(v) { document.getElementById('betAmt').value = v.toFixed(2); }
+function setAuto(v) { document.getElementById('autoC').value = v.toFixed(2); }
+
+function toast(type, msg) {
+  const icons = { s:'✅', e:'❌', i:'ℹ️', w:'⚠️' };
+  const c = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="ti">${icons[type]||'•'}</span><span class="tm">${esc(msg)}</span><span class="tx" onclick="this.parentElement.remove()">✕</span>`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+// Close modals on backdrop click
+['depModal','tipModal','rainModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('on');
+  });
+});
+
+// ═══════════════════════════ INIT ═══════════════════════════
+checkSession();
+</script>
+</body>
+</html>
