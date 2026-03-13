@@ -1,9 +1,7 @@
-// server/ws.js — WebSocket message handler
-const { stmts } = require('./db');
+const { getDb } = require('./db');
 
-// Rate limiting per connection
 const RATE_LIMITS = {
-  chat: { max: 5, window: 5000 },      // 5 messages per 5s
+  chat: { max: 5, window: 5000 },
   bet: { max: 1, window: 1000 },
   cashout: { max: 1, window: 500 },
   tip: { max: 3, window: 10000 },
@@ -14,13 +12,8 @@ function checkRate(client, action) {
   const now = Date.now();
   const rl = RATE_LIMITS[action];
   if (!rl) return true;
-
   if (!client.rates[action]) client.rates[action] = { count: 0, reset: now + rl.window };
-
-  if (now > client.rates[action].reset) {
-    client.rates[action] = { count: 0, reset: now + rl.window };
-  }
-
+  if (now > client.rates[action].reset) client.rates[action] = { count: 0, reset: now + rl.window };
   if (client.rates[action].count >= rl.max) return false;
   client.rates[action].count++;
   return true;
@@ -38,252 +31,124 @@ function setupWebSocket(wss, game) {
 
     ws.on('pong', () => { ws.isAlive = true; });
 
-    // Send current game state on connect
     send(ws, { type: 'init', state: game.getState() });
 
     ws.on('message', async (raw) => {
       let msg;
-      try {
-        msg = JSON.parse(raw);
-      } catch {
-        return;
-      }
+      try { msg = JSON.parse(raw); } catch { return; }
 
       const { type } = msg;
+      const stmts = getDb().stmts;
 
-      // ── AUTH ──
       if (type === 'auth') {
-        const { sessionId } = msg;
-        // The session is already validated via HTTP; trust userId from session
-        // ws.userId is set after handshake via session
         if (msg.userId && msg.username) {
           ws.userId = msg.userId;
           ws.user = { id: msg.userId, username: msg.username, role: msg.role };
 
-          // Send recent chat history
           const history = stmts.recentChat.all().reverse();
           send(ws, { type: 'chatHistory', messages: history.map(m => ({
-            username: m.username,
-            role: m.role,
-            message: m.message,
-            time: m.created_at,
+            username: m.username, role: m.role, message: m.message, time: m.created_at,
           }))});
 
-          // Send user's stats
-          const stats = stmts.userStats.get(ws.userId);
-          send(ws, { type: 'stats', stats });
-
-          // Send balance
-          const bal = stmts.getBalance.get(ws.userId);
-          send(ws, { type: 'balance', balance: bal?.balance_sats || 0 });
+          send(ws, { type: 'stats', stats: stmts.userStats.get(ws.userId) });
+          send(ws, { type: 'balance', balance: stmts.getBalance.get(ws.userId)?.balance_sats || 0 });
         }
         return;
       }
 
-      // All subsequent messages require auth
       if (!ws.userId) return send(ws, { type: 'error', message: 'Not authenticated' });
 
-      // ── PLACE BET ──
       if (type === 'bet') {
         if (!checkRate(ws, 'bet')) return send(ws, { type: 'error', message: 'Too fast!' });
-
-        const amountSats = Math.round(parseFloat(msg.amount) * 100); // amount in cents (USD equiv)
+        const amountSats = Math.round(parseFloat(msg.amount) * 100);
         const autoCashout = parseFloat(msg.autoCashout) || null;
-
-        if (!amountSats || amountSats < 1)
-          return send(ws, { type: 'error', message: 'Invalid bet amount' });
-
-        if (autoCashout && (autoCashout < 1.01 || autoCashout > 1000000))
-          return send(ws, { type: 'error', message: 'Invalid auto cashout' });
-
+        if (!amountSats || amountSats < 1) return send(ws, { type: 'error', message: 'Invalid bet amount' });
         const result = game.placeBet(ws.userId, ws.user.username, ws.user.role, amountSats, autoCashout);
-
         if (!result.ok) return send(ws, { type: 'error', message: result.error });
-
         send(ws, { type: 'betOk', balance: result.balance });
         return;
       }
 
-      // ── CASHOUT ──
       if (type === 'cashout') {
         if (!checkRate(ws, 'cashout')) return;
-
         const result = game.cashout(ws.userId);
         if (!result.ok) return send(ws, { type: 'error', message: result.error });
-
-        send(ws, {
-          type: 'cashoutOk',
-          mult: result.mult,
-          payoutSats: result.payoutSats,
-          balance: result.balance,
-        });
-
-        // Update stats for client
-        const stats = stmts.userStats.get(ws.userId);
-        send(ws, { type: 'stats', stats });
+        send(ws, { type: 'cashoutOk', mult: result.mult, payoutSats: result.payoutSats, balance: result.balance });
+        send(ws, { type: 'stats', stats: stmts.userStats.get(ws.userId) });
         return;
       }
 
-      // ── CHAT ──
       if (type === 'chat') {
         if (!checkRate(ws, 'chat')) return send(ws, { type: 'error', message: 'Slow down!' });
-
         const message = (msg.message || '').trim().slice(0, 200);
         if (!message) return;
-
-        // Profanity/spam check (basic)
-        if (message.length < 1) return;
-
         stmts.saveMessage.run(ws.userId, message);
-
-        // Broadcast to all connected clients
-        const chatMsg = {
-          type: 'chat',
-          username: ws.user.username,
-          role: ws.user.role,
-          message,
-          time: Math.floor(Date.now() / 1000),
-        };
-
-        wss.clients.forEach(client => {
-          if (client.readyState === 1) send(client, chatMsg);
-        });
+        const chatMsg = { type: 'chat', username: ws.user.username, role: ws.user.role, message, time: Math.floor(Date.now() / 1000) };
+        wss.clients.forEach(client => { if (client.readyState === 1) send(client, chatMsg); });
         return;
       }
 
-      // ── TIP ──
       if (type === 'tip') {
         if (!checkRate(ws, 'tip')) return send(ws, { type: 'error', message: 'Too many tips!' });
-
         const { toUsername, amountSats } = msg;
         const amt = parseInt(amountSats);
         if (!amt || amt < 1) return send(ws, { type: 'error', message: 'Invalid tip amount' });
-
         const toUser = stmts.getUserByUsername.get(toUsername);
         if (!toUser) return send(ws, { type: 'error', message: 'User not found' });
         if (toUser.id === ws.userId) return send(ws, { type: 'error', message: "Can't tip yourself" });
-
         const myBal = stmts.getBalance.get(ws.userId);
-        if (!myBal || myBal.balance_sats < amt)
-          return send(ws, { type: 'error', message: 'Insufficient balance' });
-
-        // Transfer
+        if (!myBal || myBal.balance_sats < amt) return send(ws, { type: 'error', message: 'Insufficient balance' });
         stmts.updateBalance.run(-amt, ws.userId);
         stmts.updateBalance.run(amt, toUser.id);
         stmts.createTip.run(ws.userId, toUser.id, amt);
-
         const newBal = stmts.getBalance.get(ws.userId);
         send(ws, { type: 'tipOk', balance: newBal.balance_sats });
-
-        // Notify recipient if online
         wss.clients.forEach(client => {
           if (client.readyState === 1 && client.userId === toUser.id) {
             const recvBal = stmts.getBalance.get(toUser.id);
-            send(client, {
-              type: 'tipReceived',
-              from: ws.user.username,
-              amountSats: amt,
-              balance: recvBal.balance_sats,
-            });
+            send(client, { type: 'tipReceived', from: ws.user.username, amountSats: amt, balance: recvBal.balance_sats });
           }
         });
-
-        // Broadcast tip to chat
-        const tipMsg = {
-          type: 'chat',
-          username: 'System',
-          role: 'system',
-          message: `🌧 ${ws.user.username} tipped ${toUser.username} $${(amt / 100).toFixed(2)}!`,
-          time: Math.floor(Date.now() / 1000),
-        };
-        wss.clients.forEach(client => {
-          if (client.readyState === 1) send(client, tipMsg);
-        });
+        const tipMsg = { type: 'chat', username: 'System', role: 'system', message: `🌧 ${ws.user.username} tipped ${toUser.username} $${(amt/100).toFixed(2)}!`, time: Math.floor(Date.now()/1000) };
+        wss.clients.forEach(client => { if (client.readyState === 1) send(client, tipMsg); });
         return;
       }
 
-      // ── RAIN (tip multiple users) ──
       if (type === 'rain') {
         if (!checkRate(ws, 'tip')) return send(ws, { type: 'error', message: 'Too fast!' });
-
         const totalSats = parseInt(msg.totalSats);
         if (!totalSats || totalSats < 100) return send(ws, { type: 'error', message: 'Min rain is $1' });
-
         const myBal = stmts.getBalance.get(ws.userId);
-        if (!myBal || myBal.balance_sats < totalSats)
-          return send(ws, { type: 'error', message: 'Insufficient balance' });
-
-        // Find all online users (excluding sender)
+        if (!myBal || myBal.balance_sats < totalSats) return send(ws, { type: 'error', message: 'Insufficient balance' });
         const onlineUsers = [];
-        wss.clients.forEach(client => {
-          if (client.readyState === 1 && client.userId && client.userId !== ws.userId) {
-            onlineUsers.push(client);
-          }
-        });
-
-        if (onlineUsers.length === 0) return send(ws, { type: 'error', message: 'No users online to rain on!' });
-
+        wss.clients.forEach(client => { if (client.readyState === 1 && client.userId && client.userId !== ws.userId) onlineUsers.push(client); });
+        if (onlineUsers.length === 0) return send(ws, { type: 'error', message: 'No users online!' });
         const perUser = Math.floor(totalSats / onlineUsers.length);
-        if (perUser < 1) return send(ws, { type: 'error', message: 'Too many users for this rain amount' });
-
+        if (perUser < 1) return send(ws, { type: 'error', message: 'Amount too small to rain' });
         const actualTotal = perUser * onlineUsers.length;
         stmts.updateBalance.run(-actualTotal, ws.userId);
-
         onlineUsers.forEach(client => {
           stmts.updateBalance.run(perUser, client.userId);
           const newBal = stmts.getBalance.get(client.userId);
-          send(client, {
-            type: 'rainReceived',
-            from: ws.user.username,
-            amountSats: perUser,
-            balance: newBal?.balance_sats,
-          });
+          send(client, { type: 'rainReceived', from: ws.user.username, amountSats: perUser, balance: newBal?.balance_sats });
         });
-
-        const newBal = stmts.getBalance.get(ws.userId);
-        send(ws, { type: 'rainOk', balance: newBal.balance_sats, recipients: onlineUsers.length });
-
-        wss.clients.forEach(client => {
-          if (client.readyState === 1) {
-            send(client, {
-              type: 'chat',
-              username: 'System',
-              role: 'system',
-              message: `🌧 ${ws.user.username} rained $${(actualTotal/100).toFixed(2)} on ${onlineUsers.length} users!`,
-              time: Math.floor(Date.now() / 1000),
-            });
-          }
-        });
+        send(ws, { type: 'rainOk', balance: stmts.getBalance.get(ws.userId).balance_sats, recipients: onlineUsers.length });
+        const rainMsg = { type: 'chat', username: 'System', role: 'system', message: `🌧 ${ws.user.username} rained $${(actualTotal/100).toFixed(2)} on ${onlineUsers.length} users!`, time: Math.floor(Date.now()/1000) };
+        wss.clients.forEach(client => { if (client.readyState === 1) send(client, rainMsg); });
         return;
       }
 
-      // ── GET BETS HISTORY ──
-      if (type === 'getBets') {
-        const bets = stmts.getUserBets.all(ws.userId, 20);
-        send(ws, { type: 'betsHistory', bets });
-        return;
-      }
-
-      // ── GET STATS ──
       if (type === 'getStats') {
-        const stats = stmts.userStats.get(ws.userId);
-        send(ws, { type: 'stats', stats });
+        send(ws, { type: 'stats', stats: stmts.userStats.get(ws.userId) });
         return;
       }
     });
 
-    ws.on('close', () => {
-      // Broadcast online count
-      broadcastOnlineCount(wss);
-    });
-
+    ws.on('close', () => broadcastOnlineCount(wss));
     ws.on('error', console.error);
-
-    // Broadcast updated online count
     broadcastOnlineCount(wss);
   });
 
-  // Heartbeat to detect dead connections
   const heartbeat = setInterval(() => {
     wss.clients.forEach(ws => {
       if (!ws.isAlive) return ws.terminate();
