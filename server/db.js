@@ -1,3 +1,4 @@
+// server/db.js — SQLite via sql.js (pure JavaScript, no build tools needed)
 const path = require('path');
 const fs = require('fs');
 const initSqlJs = require('sql.js');
@@ -127,22 +128,22 @@ async function initDb() {
         }
       }
     },
-    createRound:  { run: (p)   => dbRun('INSERT INTO game_rounds (round_id,crash_point,hash,seed) VALUES (?,?,?,?)',[p.round_id,p.crash_point,p.hash,p.seed]) },
-    startRound:   { run: (id)  => dbRun("UPDATE game_rounds SET started_at=strftime('%s','now') WHERE round_id=?",[id]) },
-    endRound:     { run: (id)  => dbRun("UPDATE game_rounds SET ended_at=strftime('%s','now') WHERE round_id=?",[id]) },
-    getRound:     { get: (id)  => dbGet('SELECT * FROM game_rounds WHERE round_id=?',[id]) },
-    lastRounds:   { all: (n)   => dbAll('SELECT * FROM game_rounds WHERE ended_at IS NOT NULL ORDER BY id DESC LIMIT ?',[n]) },
-    placeBet:     { run: (p)   => dbRun('INSERT INTO bets (round_id,user_id,amount_sats,auto_cashout) VALUES (?,?,?,?)',[p.round_id,p.user_id,p.amount_sats,p.auto_cashout||null]) },
-    cashoutBet:   { run: (m,ps,rid,uid) => dbRun("UPDATE bets SET cashout_mult=?,payout_sats=?,cashed_at=strftime('%s','now') WHERE round_id=? AND user_id=? AND cashout_mult IS NULL",[m,ps,rid,uid]) },
-    getRoundBets: { all: (rid) => dbAll('SELECT b.*,u.username,u.role FROM bets b JOIN users u ON b.user_id=u.id WHERE b.round_id=?',[rid]) },
-    getUserBets:  { all: (uid,lim) => dbAll('SELECT * FROM bets WHERE user_id=? ORDER BY id DESC LIMIT ?',[uid,lim]) },
+    createRound: { run: (p) => dbRun('INSERT INTO game_rounds (round_id,crash_point,hash,seed) VALUES (?,?,?,?)',[p.round_id,p.crash_point,p.hash,p.seed]) },
+    startRound:  { run: (id) => dbRun("UPDATE game_rounds SET started_at=strftime('%s','now') WHERE round_id=?",[id]) },
+    endRound:    { run: (id) => dbRun("UPDATE game_rounds SET ended_at=strftime('%s','now') WHERE round_id=?",[id]) },
+    getRound:    { get: (id) => dbGet('SELECT * FROM game_rounds WHERE round_id=?',[id]) },
+    lastRounds:  { all: (n)  => dbAll('SELECT * FROM game_rounds WHERE ended_at IS NOT NULL ORDER BY id DESC LIMIT ?',[n]) },
+    placeBet:    { run: (p)  => dbRun('INSERT INTO bets (round_id,user_id,amount_sats,auto_cashout) VALUES (?,?,?,?)',[p.round_id,p.user_id,p.amount_sats,p.auto_cashout||null]) },
+    cashoutBet:  { run: (m,ps,rid,uid) => dbRun("UPDATE bets SET cashout_mult=?,payout_sats=?,cashed_at=strftime('%s','now') WHERE round_id=? AND user_id=? AND cashout_mult IS NULL",[m,ps,rid,uid]) },
+    getRoundBets:{ all: (rid) => dbAll('SELECT b.*,u.username,u.role FROM bets b JOIN users u ON b.user_id=u.id WHERE b.round_id=?',[rid]) },
+    getUserBets: { all: (uid,lim) => dbAll('SELECT * FROM bets WHERE user_id=? ORDER BY id DESC LIMIT ?',[uid,lim]) },
     hasBetInRound:{ get: (rid,uid) => dbGet('SELECT id FROM bets WHERE round_id=? AND user_id=?',[rid,uid]) },
-    saveMessage:  { run: (uid,msg) => dbRun('INSERT INTO chat_messages (user_id,message) VALUES (?,?)',[uid,msg]) },
-    recentChat:   { all: () => dbAll('SELECT cm.*,u.username,u.role FROM chat_messages cm JOIN users u ON cm.user_id=u.id ORDER BY cm.id DESC LIMIT 50') },
-    createTip:    { run: (f,t,a) => dbRun('INSERT INTO tips (from_user,to_user,amount_sats) VALUES (?,?,?)',[f,t,a]) },
+    saveMessage: { run: (uid,msg) => dbRun('INSERT INTO chat_messages (user_id,message) VALUES (?,?)',[uid,msg]) },
+    recentChat:  { all: () => dbAll('SELECT cm.*,u.username,u.role FROM chat_messages cm JOIN users u ON cm.user_id=u.id ORDER BY cm.id DESC LIMIT 50') },
+    createTip:   { run: (f,t,a) => dbRun('INSERT INTO tips (from_user,to_user,amount_sats) VALUES (?,?,?)',[f,t,a]) },
     createDeposit:{ run: (uid,coin,addr) => dbRun('INSERT INTO deposits (user_id,coin,address) VALUES (?,?,?)',[uid,coin,addr]) },
-    userStats:    { get: (uid) => dbGet('SELECT COUNT(*) as total_bets, SUM(CASE WHEN cashout_mult IS NOT NULL THEN 1 ELSE 0 END) as wins, SUM(amount_sats) as wagered, SUM(payout_sats)-SUM(amount_sats) as profit FROM bets WHERE user_id=?',[uid]) },
-    leaderboard:  { all: () => dbAll('SELECT u.username,u.role,SUM(b.amount_sats) as wagered,SUM(b.payout_sats)-SUM(b.amount_sats) as profit,COUNT(*) as bets FROM bets b JOIN users u ON b.user_id=u.id GROUP BY u.id ORDER BY profit DESC LIMIT 50') },
+    userStats:   { get: (uid) => dbGet('SELECT COUNT(*) as total_bets, SUM(CASE WHEN cashout_mult IS NOT NULL THEN 1 ELSE 0 END) as wins, SUM(amount_sats) as wagered, SUM(payout_sats)-SUM(amount_sats) as profit FROM bets WHERE user_id=?',[uid]) },
+    leaderboard: { all: () => dbAll('SELECT u.username,u.role,SUM(b.amount_sats) as wagered,SUM(b.payout_sats)-SUM(b.amount_sats) as profit,COUNT(*) as bets FROM bets b JOIN users u ON b.user_id=u.id GROUP BY u.id ORDER BY profit DESC LIMIT 50') },
   };
 
   _cache = { stmts, run: dbRun, get: dbGet, all: dbAll, save };

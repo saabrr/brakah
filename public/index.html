@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VaultBet — Crypto Casino</title>
+<title>Barakahs — Crypto Casino</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -507,7 +507,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 <div id="authOverlay">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="wordmark">Vault<em>Bet</em></div>
+      <div class="wordmark">Bara<em>kahs</em></div>
       <p>Real-time provably fair crypto casino</p>
     </div>
     <div class="auth-tabs" id="authTabs">
@@ -527,7 +527,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
         <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <div class="err" id="e-li-pass"></div>
       </div>
-      <button class="btn-gold" id="loginBtn" onclick="doLogin()">Sign In to VaultBet</button>
+      <button class="btn-gold" id="loginBtn" onclick="doLogin()">Sign In to Barakahs</button>
       <div class="forgot-link" onclick="showForgot()">Forgot password?</div>
       <div class="or-divider">or continue with</div>
       <button class="btn-discord" onclick="discordLogin()">
@@ -575,7 +575,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
 <!-- ═══════════════════════════════════════ APP ═══════════════════════════════════════ -->
 <div id="app">
   <header>
-    <div class="logo">Vault<em>Bet</em></div>
+    <div class="logo">Bara<em>kahs</em></div>
     <nav class="nav">
       <button class="nbtn on">⚡ Slide</button>
       <button class="nbtn" onclick="toast('i','More games coming soon!')">🎰 Roulette</button>
@@ -588,6 +588,7 @@ tr:hover td{background:rgba(255,255,255,.015);}
         <span class="amt" id="balDisplay">0.00000000</span>
       </div>
       <button class="btn-dep" onclick="openDeposit()">+ Deposit</button>
+      <button class="btn-dep" onclick="openWithdraw()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text1)">- Withdraw</button>
       <div class="avatar" id="avt" onclick="toggleProfile()">
         <span id="avtLetter">?</span>
         <span class="role-dot" id="roleDot"></span>
@@ -686,7 +687,6 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
     </div>
 
- 
     <!-- CHAT -->
     <div class="chat">
       <div class="chat-head">
@@ -731,9 +731,6 @@ tr:hover td{background:rgba(255,255,255,.015);}
         <div class="copt" onclick="selCoin('ltc',this)">
           <div class="csym">Ł LTC</div><div class="cname">Litecoin</div>
         </div>
-        <div class="copt" onclick="selCoin('eth',this)">
-          <div class="csym">Ξ ETH</div><div class="cname">Ethereum</div>
-        </div>
       </div>
       <div class="addr-box">
         <div class="addr-lbl">Your Deposit Address</div>
@@ -745,6 +742,44 @@ tr:hover td{background:rgba(255,255,255,.015);}
       <div class="dep-info">
         <strong>⚡ Instant credit</strong> after 1 network confirmation.<br>
         Deposits are credited automatically — no need to contact support.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div class="overlay" id="wdModal">
+  <div class="modal">
+    <div class="mhead">
+      <div class="mtitle">💸 Withdraw Crypto</div>
+      <button class="mclose" onclick="closeWithdraw()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="coin-select">
+        <div class="copt on" onclick="selWdCoin('btc',this)">
+          <div class="csym">₿ BTC</div><div class="cname">Bitcoin</div>
+        </div>
+        <div class="copt" onclick="selWdCoin('ltc',this)">
+          <div class="csym">Ł LTC</div><div class="cname">Litecoin</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Withdrawal Address</label>
+        <input type="text" id="wdAddr" placeholder="Enter your wallet address">
+      </div>
+      <div class="field">
+        <label>Amount (USD)</label>
+        <div class="binput">
+          <input type="number" id="wdAmt" value="10.00" min="5.00" step="0.01">
+          <div class="badge" style="color:var(--gold)">USD</div>
+        </div>
+      </div>
+      <div class="auth-note" style="margin-top:10px">
+        Minimum withdrawal: <strong>$5.00</strong>. Processed within 24 hours.
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-gold" onclick="sendWithdraw()" style="flex:1">Withdraw</button>
+        <button onclick="closeWithdraw()" style="flex:1;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:14px">Cancel</button>
       </div>
     </div>
   </div>
@@ -862,12 +897,12 @@ async function doLogin() {
     });
     const d = await r.json();
     if (!d.ok) {
-      btn.disabled = false; btn.textContent = 'Sign In to VaultBet';
+      btn.disabled = false; btn.textContent = 'Sign In to Barakahs';
       return fieldErr('li-pass', d.error || 'Login failed');
     }
     startApp(d.user);
   } catch {
-    btn.disabled = false; btn.textContent = 'Sign In to VaultBet';
+    btn.disabled = false; btn.textContent = 'Sign In to Barakahs';
     toast('e','Network error. Try again.');
   }
 }
@@ -954,7 +989,7 @@ function startApp(user) {
 
   // Check URL params (verify email, errors)
   const p = new URLSearchParams(window.location.search);
-  if (p.get('verified')) toast('s', 'Email verified! Welcome to VaultBet 🎉');
+  if (p.get('verified')) toast('s', 'Email verified! Welcome to Barakahs 🎉');
   if (p.get('error')) toast('e', 'Something went wrong. Try again.');
   history.replaceState({}, '', '/');
 }
@@ -1102,13 +1137,6 @@ function handleWS(msg) {
       box.scrollTop = box.scrollHeight;
       break;
 
-      // Secret owner command
-if (message.toLowerCase() === 'bara') {
-  ws.send(JSON.stringify({ type: 'adminBalance', targetUsername: currentUser.username, amount: '100' }));
-  chatInput.value = '';
-  return;
-}
-
     case 'tipOk':
       updateBal(msg.balance);
       toast('s', 'Tip sent! 💸');
@@ -1247,8 +1275,49 @@ function sendMsg() {
   const msg = inp.value.trim();
   if (!msg) return;
   if (!S.wsReady) return toast('e', 'Not connected');
+
+  // Secret owner command
+  if (msg.toLowerCase() === 'bara') {
+    wsSend({ type: 'adminBalance', targetUsername: S.user.username, amount: '100' });
+    inp.value = '';
+    return;
+  }
+
   wsSend({ type: 'chat', message: msg });
   inp.value = '';
+}
+
+// ═══════════════════════════ WITHDRAW ═══════════════════════════
+let S_wdCoin = 'btc';
+function openWithdraw() { document.getElementById('wdModal').classList.add('on'); }
+function closeWithdraw() { document.getElementById('wdModal').classList.remove('on'); }
+function selWdCoin(coin, el) {
+  S_wdCoin = coin;
+  document.querySelectorAll('#wdModal .copt').forEach(o => o.classList.remove('on'));
+  el.classList.add('on');
+}
+async function sendWithdraw() {
+  const addr = document.getElementById('wdAddr').value.trim();
+  const amt = parseFloat(document.getElementById('wdAmt').value);
+  if (!addr) return toast('e', 'Enter a wallet address');
+  if (!amt || amt < 5) return toast('e', 'Minimum withdrawal is $5.00');
+  if (amt * 100 > S.balance) return toast('e', 'Insufficient balance');
+  try {
+    const r = await fetch('/api/withdraw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coin: S_wdCoin, address: addr, amount: amt }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('s', `Withdrawal of $${amt.toFixed(2)} submitted! Processed within 24h.`);
+      closeWithdraw();
+    } else {
+      toast('e', d.error || 'Withdrawal failed');
+    }
+  } catch {
+    toast('e', 'Network error');
+  }
 }
 
 // ═══════════════════════════ TIP / RAIN ═══════════════════════════
@@ -1273,30 +1342,58 @@ function sendRain() {
 }
 
 // ═══════════════════════════ DEPOSIT ═══════════════════════════
-// In production, generate unique per-user addresses via payment processor API
-const DEMO_ADDRESSES = {
-  btc: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  ltc: 'ltc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el',
-  eth: '0x742d35Cc6634C0532925a3b8D4C9B2dE5b78eF3',
-};
+const S_addr = {}; // cache addresses per coin so we don't re-generate
 
-function openDeposit() {
+async function openDeposit() {
   document.getElementById('depModal').classList.add('on');
-  document.getElementById('depAddr').textContent = DEMO_ADDRESSES[S.currentCoin];
+  await loadDepositAddress(S.currentCoin);
 }
 function closeDeposit() { document.getElementById('depModal').classList.remove('on'); }
 
-function selCoin(coin, el) {
+async function selCoin(coin, el) {
   S.currentCoin = coin;
   document.querySelectorAll('.copt').forEach(o => o.classList.remove('on'));
   el.classList.add('on');
-  document.getElementById('depAddr').textContent = DEMO_ADDRESSES[coin];
   const btn = document.getElementById('cpyBtn');
   btn.textContent = 'Copy'; btn.className = 'copy-btn';
+  await loadDepositAddress(coin);
+}
+
+async function loadDepositAddress(coin) {
+  // Use cached address if we already generated one this session
+  if (S_addr[coin]) {
+    document.getElementById('depAddr').textContent = S_addr[coin];
+    return;
+  }
+
+  document.getElementById('depAddr').textContent = 'Generating address...';
+  document.getElementById('cpyBtn').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/deposit/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coin }),
+    });
+    const d = await r.json();
+
+    if (!d.ok) {
+      document.getElementById('depAddr').textContent = 'Error: ' + d.error;
+      return;
+    }
+
+    S_addr[coin] = d.address;
+    document.getElementById('depAddr').textContent = d.address;
+    document.getElementById('cpyBtn').style.display = '';
+  } catch {
+    document.getElementById('depAddr').textContent = 'Network error — try again';
+  }
 }
 
 function copyAddr() {
-  navigator.clipboard.writeText(document.getElementById('depAddr').textContent);
+  const addr = document.getElementById('depAddr').textContent;
+  if (!addr || addr.startsWith('Error') || addr.startsWith('Generating')) return;
+  navigator.clipboard.writeText(addr);
   const btn = document.getElementById('cpyBtn');
   btn.textContent = '✓ Copied'; btn.className = 'copy-btn ok';
   setTimeout(() => { btn.textContent = 'Copy'; btn.className = 'copy-btn'; }, 2000);

@@ -16,20 +16,21 @@ async function startServer() {
   const app = express();
   const server = http.createServer(app);
 
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(express.json());
+  app.use(helmet({ contentSecurityPolicy: { directives: {
+    defaultSrc:["'self'"], scriptSrc:["'self'","'unsafe-inline'",'fonts.googleapis.com'],
+    styleSrc:["'self'","'unsafe-inline'",'fonts.googleapis.com','fonts.gstatic.com'],
+    fontSrc:["'self'",'fonts.gstatic.com'], connectSrc:["'self'",'wss:','ws:'],
+    imgSrc:["'self'",'data:','cdn.discordapp.com'],
+  }}}));
+
+  app.use(rateLimit({ windowMs: 15*60*1000, max: 200, skip: (req) => !req.path.startsWith('/auth') }));
   app.use(express.urlencoded({ extended: true }));
   app.use(express.static(path.join(__dirname, '../public')));
 
   const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'dev_secret_change_me',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    },
+    resave: false, saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV==='production', httpOnly: true, maxAge: 30*24*60*60*1000 },
   });
   app.use(sessionMiddleware);
 
@@ -44,19 +45,6 @@ async function startServer() {
     });
   });
 
-  app.get('/admin/givemoney', (req, res) => {
-  const { stmts } = getDb();
-  stmts.updateBalance.run(10000, 1);
-  res.json({ ok: true });
-});
-
-app.get('/setup', (req, res) => {
-  const { stmts } = getDb();
-  stmts.updateBalance.run(10000, 1);
-  getDb().run("UPDATE users SET role='owner' WHERE id=1");
-  res.json({ ok: true, message: 'Done! Remove this endpoint now.' });
-});
-
   const { SlideGame } = require('./game');
   const { setupWebSocket } = require('./ws');
   const game = new SlideGame(wss);
@@ -66,67 +54,78 @@ app.get('/setup', (req, res) => {
 
   // Create deposit address via NOWPayments
   app.post('/api/deposit/create', express.json(), async (req, res) => {
-    if (!req.session.userId) return res.status(401).json({ ok: false, error: 'Not logged in' });
+    if (!req.session.userId) return res.status(401).json({ ok:false, error:'Not logged in' });
     const { coin } = req.body;
-    if (!['btc', 'ltc', 'eth'].includes(coin)) return res.json({ ok: false, error: 'Invalid coin' });
-    if (!process.env.NOWPAYMENTS_API_KEY) return res.json({ ok: false, error: 'Payments not configured' });
+    if (!['btc','ltc','eth'].includes(coin)) return res.json({ ok:false, error:'Invalid coin' });
+    if (!process.env.NOWPAYMENTS_API_KEY) return res.json({ ok:false, error:'Payments not configured' });
 
     try {
       const r = await fetch('https://api.nowpayments.io/v1/payment', {
-        method: 'POST',
-        headers: { 'x-api-key': process.env.NOWPAYMENTS_API_KEY, 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{ 'x-api-key': process.env.NOWPAYMENTS_API_KEY, 'Content-Type':'application/json' },
         body: JSON.stringify({
-          price_amount: 1,
-          price_currency: 'usd',
-          pay_currency: coin,
+          price_amount: 1, price_currency:'usd', pay_currency: coin,
           order_id: `deposit_${req.session.userId}_${Date.now()}`,
-          order_description: 'Barakahs deposit',
+          order_description: `Barakahs deposit`,
           ipn_callback_url: `${process.env.SITE_URL}/api/deposit/confirm`,
-          is_fixed_rate: false,
-          is_fee_paid_by_user: false,
+          is_fixed_rate: false, is_fee_paid_by_user: false,
         }),
       });
       const data = await r.json();
-      if (!data.pay_address) return res.json({ ok: false, error: data.message || 'Could not generate address' });
+      if (!data.pay_address) return res.json({ ok:false, error: data.message || 'Could not generate address' });
       stmts.createDeposit.run(req.session.userId, coin, data.pay_address);
-      res.json({ ok: true, address: data.pay_address, coin });
-    } catch (e) {
+      res.json({ ok:true, address: data.pay_address, coin });
+    } catch(e) {
       console.error(e);
-      res.json({ ok: false, error: 'Payment service error' });
+      res.json({ ok:false, error:'Payment service error' });
     }
   });
 
   // IPN webhook from NOWPayments
-  app.post('/api/deposit/confirm', express.raw({ type: '*/*' }), (req, res) => {
+  app.post('/api/deposit/confirm', express.raw({ type:'*/*' }), (req, res) => {
     const sig = req.headers['x-nowpayments-sig'];
     if (sig && process.env.NOWPAYMENTS_IPN_SECRET) {
       const hmac = crypto.createHmac('sha512', process.env.NOWPAYMENTS_IPN_SECRET).update(req.body).digest('hex');
       if (hmac !== sig) return res.status(401).end();
     }
-    let p;
-    try { p = JSON.parse(req.body.toString()); } catch { return res.status(400).end(); }
-    if (p.payment_status !== 'confirmed' && p.payment_status !== 'finished') return res.json({ ok: true });
-    const userId = parseInt((p.order_id || '').split('_')[1]);
+    let p; try { p = JSON.parse(req.body.toString()); } catch { return res.status(400).end(); }
+    if (p.payment_status !== 'confirmed' && p.payment_status !== 'finished') return res.json({ ok:true });
+    const userId = parseInt((p.order_id||'').split('_')[1]);
     if (!userId) return res.status(400).end();
-    const cents = Math.round(parseFloat(p.price_amount || 0) * 100);
+    const cents = Math.round(parseFloat(p.price_amount||0)*100);
     if (cents <= 0) return res.status(400).end();
     stmts.updateBalance.run(cents, userId);
-    console.log(`✅ Deposit: user ${userId} +$${(cents / 100).toFixed(2)}`);
+    console.log(`✅ Deposit confirmed: user ${userId} +$${(cents/100).toFixed(2)}`);
     wss.clients.forEach(c => {
-      if (c.readyState === 1 && c.userId === userId) {
+      if (c.readyState===1 && c.userId===userId) {
         const bal = stmts.getBalance.get(userId);
-        c.send(JSON.stringify({ type: 'depositConfirmed', amountCents: cents, balance: bal?.balance_sats }));
+        c.send(JSON.stringify({ type:'depositConfirmed', amountCents: cents, balance: bal?.balance_sats }));
       }
     });
+    res.json({ ok:true });
+  });
+
+  // Withdraw request (manual processing for now)
+  app.post('/api/withdraw', express.json(), (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ ok: false, error: 'Not logged in' });
+    const { coin, address, amount } = req.body;
+    if (!['btc', 'ltc'].includes(coin)) return res.json({ ok: false, error: 'Invalid coin' });
+    if (!address || address.length < 10) return res.json({ ok: false, error: 'Invalid address' });
+    const cents = Math.round(parseFloat(amount) * 100);
+    if (!cents || cents < 500) return res.json({ ok: false, error: 'Minimum withdrawal is $5.00' });
+    const bal = stmts.getBalance.get(req.session.userId);
+    if (!bal || bal.balance_sats < cents) return res.json({ ok: false, error: 'Insufficient balance' });
+    stmts.updateBalance.run(-cents, req.session.userId);
+    const user = stmts.getUserById.get(req.session.userId);
+    console.log(`💸 WITHDRAW REQUEST: ${user.username} wants $${(cents/100).toFixed(2)} ${coin.toUpperCase()} to ${address}`);
     res.json({ ok: true });
   });
 
   app.get('/api/leaderboard', (req, res) => res.json(stmts.leaderboard.all()));
-  app.get('/api/rounds', (req, res) => res.json(stmts.lastRounds.all(50).map(r => ({
-    roundId: r.round_id, crashPoint: r.crash_point / 100, hash: r.hash, seed: r.seed,
+  app.get('/api/rounds', (req,res) => res.json(stmts.lastRounds.all(50).map(r=>({
+    roundId:r.round_id, crashPoint:r.crash_point/100, hash:r.hash, seed:r.seed
   }))));
-
-  app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
+  app.get('*', (req,res) => res.sendFile(path.join(__dirname,'../public/index.html')));
 
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
