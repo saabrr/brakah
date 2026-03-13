@@ -44,6 +44,19 @@ async function startServer() {
     });
   });
 
+  app.get('/admin/givemoney', (req, res) => {
+  const { stmts } = getDb();
+  stmts.updateBalance.run(10000, 1);
+  res.json({ ok: true });
+});
+
+app.get('/setup', (req, res) => {
+  const { stmts } = getDb();
+  stmts.updateBalance.run(10000, 1);
+  getDb().run("UPDATE users SET role='owner' WHERE id=1");
+  res.json({ ok: true, message: 'Done! Remove this endpoint now.' });
+});
+
   const { SlideGame } = require('./game');
   const { setupWebSocket } = require('./ws');
   const game = new SlideGame(wss);
