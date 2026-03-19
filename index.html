@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroupFlip — Roblox Group Wagering</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080810;--bg2:#0f0f1a;--bg3:#161624;--bg4:#1d1d2e;
+  --border:rgba(255,255,255,0.05);--border2:rgba(255,255,255,0.1);
+  --text:#eeeef5;--muted:#7070a0;--dim:#3a3a5c;
+  --accent:#ff3c6e;--accent2:#ff6b91;
+  --gold:#f5c542;--green:#00e57a;--cyan:#00d4ff;--purple:#9d5cff;
+  --r:14px;--rlg:20px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;overflow:hidden}
+*{cursor:none!important}
+#cur{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .15s,height .15s}
+#cur2{position:fixed;width:32px;height:32px;border:1px solid rgba(255,60,110,0.4);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:all .08s linear}
+body::before{content:'';position:fixed;inset:0;z-index:0;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:drift 8s ease-in-out infinite}
+.orb.a{width:400px;height:400px;background:rgba(255,60,110,0.06);top:-100px;right:-100px}
+.orb.b{width:300px;height:300px;background:rgba(157,92,255,0.05);bottom:-80px;left:-80px;animation-delay:-4s}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
+.shell{display:flex;height:100vh;position:relative;z-index:1}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.lmark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#fff;flex-shrink:0;box-shadow:0 0 20px rgba(255,60,110,0.3)}
+.ltext{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
+.ltext em{color:var(--accent);font-style:normal}
+.nav{flex:1;padding:14px 10px;overflow-y:auto}
+.nsec{margin-bottom:22px}
+.nlbl{font-size:9px;font-weight:600;letter-spacing:2.5px;color:var(--dim);text-transform:uppercase;padding:0 12px;margin-bottom:8px}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--muted);font-size:13px;transition:all .15s;position:relative;border:1px solid transparent;margin-bottom:2px}
+.ni:hover{background:rgba(255,255,255,0.04);color:var(--text);border-color:var(--border)}
+.ni.active{background:rgba(255,60,110,0.08);color:var(--accent2);border-color:rgba(255,60,110,0.2)}
+.nic{width:18px;text-align:center;font-size:14px;flex-shrink:0}
+.nbadge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace}
+.nbadge.live{background:rgba(0,229,122,0.15);color:var(--green);border:1px solid rgba(0,229,122,0.25);animation:pulse 2s infinite}
+.nbadge.red{background:rgba(255,60,110,0.15);color:var(--accent);border:1px solid rgba(255,60,110,0.25)}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--accent);position:absolute;top:10px;right:10px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.susr{padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.uav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;border:2px solid rgba(255,60,110,0.3)}
+.uname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.urank{font-size:9px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:1px;margin-top:1px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:58px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px}
+.ptitle{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px}
+.tpills{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);padding:6px 13px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px}
+.pill .dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.btn{padding:9px 18px;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.bp{background:var(--accent);color:#fff;box-shadow:0 0 20px rgba(255,60,110,0.2)}
+.bp:hover{background:var(--accent2);transform:translateY(-1px)}
+.bo{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.bo:hover{background:var(--bg3)}
+.bsm{padding:6px 13px;font-size:12px}
+.bgreen{background:rgba(0,229,122,0.1);color:var(--green);border:1px solid rgba(0,229,122,0.2)}
+.bred{background:rgba(255,60,110,0.1);color:var(--accent);border:1px solid rgba(255,60,110,0.2)}
+.bgold{background:rgba(245,197,66,0.1);color:var(--gold);border:1px solid rgba(245,197,66,0.2)}
+.content{flex:1;overflow-y:auto;padding:24px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+.page{display:none;animation:fu .2s ease}
+.page.active{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
+.ch{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ct{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.st{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.sa{position:absolute;top:0;left:0;right:0;height:2px}
+.sa.a{background:linear-gradient(90deg,var(--accent),var(--purple))}
+.sa.b{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.sa.c{background:linear-gradient(90deg,var(--gold),#ff9f43)}
+.sa.d{background:linear-gradient(90deg,var(--cyan),var(--purple))}
+.slbl{font-size:10px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px}
+.sval{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;line-height:1}
+.ssub{font-size:11px;color:var(--muted);margin-top:6px}
+.ssub.up{color:var(--green)}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.gc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:26px;transition:all .2s;position:relative;overflow:hidden}
+.gc::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;pointer-events:none}
+.gc:hover{transform:translateY(-3px)}
+.gc:hover::after{opacity:1}
+.gc.cf:hover{border-color:rgba(245,197,66,0.25);box-shadow:0 0 40px rgba(245,197,66,0.06)}
+.gc.cf::after{background:radial-gradient(circle at top right,rgba(245,197,66,0.04),transparent 60%)}
+.gc.rl:hover{border-color:rgba(255,60,110,0.25);box-shadow:0 0 40px rgba(255,60,110,0.06)}
+.gc.rl::after{background:radial-gradient(circle at top right,rgba(255,60,110,0.04),transparent 60%)}
+.ge{font-size:38px;display:block;margin-bottom:14px}
+.gn{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:8px}
+.gd{color:var(--muted);font-size:12.5px;line-height:1.65;margin-bottom:18px}
+.gtags{display:flex;align-items:center;gap:8px}
+.tag{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.tlive{background:rgba(0,229,122,0.1);color:var(--green);border:1px solid rgba(0,229,122,0.2)}
+.thot{background:rgba(255,60,110,0.1);color:var(--accent);border:1px solid rgba(255,60,110,0.2)}
+.tnew{background:rgba(157,92,255,0.1);color:var(--purple);border:1px solid rgba(157,92,255,0.2)}
+.tplrs{font-size:11px;color:var(--muted);margin-left:auto;font-family:'DM Mono',monospace}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:10px 18px;font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.tbl td{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,0.025);font-size:13px;transition:background .1s}
+.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+.tbl tr:last-child td{border-bottom:none}
+.uc{display:flex;align-items:center;gap:9px}
+.avsm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.gpill{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted)}
+.sbdg{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace;font-weight:600}
+.sbdg.open{background:rgba(0,229,122,0.1);color:var(--green)}
+.sbdg.pending{background:rgba(245,197,66,0.1);color:var(--gold)}
+.sbdg.complete{background:rgba(100,100,130,0.1);color:var(--muted)}
+.cfl{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.arena{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:36px;display:flex;flex-direction:column;align-items:center;min-height:440px;position:relative;overflow:hidden}
+.arena::before{content:'';position:absolute;width:320px;height:320px;background:radial-gradient(circle,rgba(245,197,66,0.05),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.cwrap{width:130px;height:130px;perspective:900px;margin:16px 0 30px}
+.coin{width:130px;height:130px;position:relative;transform-style:preserve-3d}
+.coin.spin{animation:coinflip 1.5s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes coinflip{0%{transform:rotateY(0)}100%{transform:rotateY(1800deg)}}
+.face{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:42px;backface-visibility:hidden;letter-spacing:2px}
+.fh{background:conic-gradient(from 0deg,#9a7010,#f5c542,#c8960c,#f5c542,#9a7010);color:#3a2800;box-shadow:0 0 0 4px rgba(245,197,66,0.15)}
+.ft{background:conic-gradient(from 0deg,#1a1a28,#2d2d45,#1a1a28,#2d2d45,#1a1a28);color:#555;transform:rotateY(180deg);box-shadow:0 0 0 4px rgba(255,255,255,0.04)}
+.vsrow{width:100%;max-width:480px;display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.pbox{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;align-items:center;gap:7px;transition:border-color .2s}
+.pbox.you{border-color:rgba(255,60,110,0.25);background:rgba(255,60,110,0.04)}
+.pbox.them{border-color:rgba(157,92,255,0.25);background:rgba(157,92,255,0.04)}
+.pbox.empty{border-style:dashed;background:transparent;color:var(--dim)}
+.pn{font-weight:600;font-size:13px}
+.pg{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;max-width:110px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.vsbdg{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--dim);letter-spacing:2px}
+.abtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.wbanner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;background:rgba(8,8,16,0.96);border:1px solid rgba(245,197,66,0.3);border-radius:18px;padding:24px 36px;text-align:center;backdrop-filter:blur(20px)}
+.wbanner.show{display:block;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(0.7);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.wemoji{font-size:48px;display:block;margin-bottom:10px}
+.wname{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--gold)}
+.wsub{font-size:12px;color:var(--muted);margin-top:4px}
+.spanel{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden}
+.phd{padding:14px 18px;border-bottom:1px solid var(--border);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;display:flex;align-items:center;justify-content:space-between}
+.pbd{padding:16px 18px}
+.ilbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .15s;margin-bottom:12px}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--dim)}
+.schoice{display:flex;gap:8px;margin-bottom:12px}
+.scho{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-weight:600;font-size:12px;transition:all .15s;text-align:center}
+.scho.h.on{background:rgba(245,197,66,0.1);color:var(--gold);border-color:rgba(245,197,66,0.3)}
+.scho.t.on{background:rgba(255,255,255,0.06);color:var(--text);border-color:var(--border2)}
+.warnbox{background:rgba(245,197,66,0.05);border:1px solid rgba(245,197,66,0.12);border-radius:8px;padding:10px 13px;margin-bottom:12px}
+.wtitle{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-bottom:3px}
+.wbody{font-size:11px;color:var(--muted);line-height:1.55}
+.rll{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.rla{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:32px;display:flex;flex-direction:column;align-items:center;min-height:440px;position:relative;overflow:hidden}
+.rswrap{width:100%;max-width:580px;overflow:hidden;border-radius:10px;border:1px solid var(--border);position:relative;height:62px;margin:18px 0}
+.rswrap::before,.rswrap::after{content:'';position:absolute;top:0;bottom:0;width:100px;z-index:2;pointer-events:none}
+.rswrap::before{left:0;background:linear-gradient(to right,var(--bg2),transparent)}
+.rswrap::after{right:0;background:linear-gradient(to left,var(--bg2),transparent)}
+.rneedle{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--accent);z-index:3;transform:translateX(-50%);box-shadow:0 0 8px var(--accent)}
+.rneedle::before{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid var(--accent)}
+.rstrip{display:flex;align-items:center;gap:4px;height:100%;padding:0 8px;will-change:transform}
+.rtile{width:54px;height:50px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'DM Mono',monospace;border:1px solid rgba(255,255,255,0.08)}
+.rtile.r{background:rgba(255,60,110,0.2);color:#ff8090;border-color:rgba(255,60,110,0.25)}
+.rtile.b{background:rgba(30,30,50,0.6);color:#6070a0}
+.rtile.g{background:rgba(0,229,122,0.15);color:var(--green);border-color:rgba(0,229,122,0.25)}
+.bzones{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;max-width:580px}
+.bzone{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 10px;text-align:center;transition:all .15s}
+.bzone:hover{transform:translateY(-2px)}
+.bzone.r:hover{border-color:rgba(255,60,110,0.3)}
+.bzone.g:hover{border-color:rgba(0,229,122,0.3)}
+.bzlbl{font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.bzm{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px}
+.bzc{font-size:10px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace}
+.bzone.r .bzlbl,.bzone.r .bzm{color:var(--accent)}
+.bzone.b .bzlbl,.bzone.b .bzm{color:var(--muted)}
+.bzone.g .bzlbl,.bzone.g .bzm{color:var(--green)}
+.chl{display:grid;grid-template-columns:1fr 260px;gap:18px;height:calc(100vh - 106px)}
+.chm{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);display:flex;flex-direction:column;overflow:hidden}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+.msg{display:flex;gap:10px}
+.mav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.mhd{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.mu{font-size:13px;font-weight:600}
+.mt{font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;margin-left:auto}
+.mx{font-size:13px;color:rgba(238,238,245,0.8);line-height:1.55}
+.rchip{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.8px;font-family:'DM Mono',monospace}
+.rco{background:rgba(255,60,110,0.15);color:var(--accent);border:1px solid rgba(255,60,110,0.25)}
+.rcg{background:rgba(245,197,66,0.15);color:var(--gold);border:1px solid rgba(245,197,66,0.25)}
+.rcw{background:rgba(0,212,255,0.1);color:var(--cyan);border:1px solid rgba(0,212,255,0.2)}
+.rcs{background:rgba(157,92,255,0.1);color:var(--purple);border:1px solid rgba(157,92,255,0.2)}
+.cinrow{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.cinp{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.cinp:focus{border-color:rgba(255,60,110,0.3)}
+.cinp::placeholder{color:var(--dim)}
+.onl{display:flex;flex-direction:column;gap:2px;padding:8px}
+.olitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;transition:background .1s}
+.olitem:hover{background:var(--bg3)}
+.oldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0}
+.lbrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.lbrow:hover{background:rgba(255,255,255,0.02)}
+.lbrow:last-child{border-bottom:none}
+.lbn{font-family:'Bebas Neue',sans-serif;font-size:18px;width:28px;text-align:center}
+.lbn.g{color:var(--gold)}.lbn.s{color:#b0b8c8}.lbn.b{color:#cd7f32}
+.lbi{flex:1}.lbname{font-size:13px;font-weight:500}.lbdet{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
+.phero{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:30px;margin-bottom:18px;position:relative;overflow:hidden}
+.phero::after{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,60,110,0.08),transparent 70%);pointer-events:none}
+.ptop{display:flex;align-items:center;gap:20px;margin-bottom:24px}
+.avlg{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:#fff;border:3px solid rgba(255,60,110,0.25);flex-shrink:0}
+.psg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pst{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center}
+.psv{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px}
+.psl{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-top:3px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.pitem{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:border-color .15s}
+.pitem:hover{border-color:var(--border2)}
+.pi{flex:1}.pin{font-size:13px;font-weight:500;margin-bottom:2px}.pid{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+/* Login */
+.lscr{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.lscr.gone{display:none}
+.lglow{position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,60,110,0.08),transparent 70%);top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none}
+.lbox{background:var(--bg2);border:1px solid var(--border);border-radius:24px;padding:44px 48px;width:420px;position:relative;z-index:1;text-align:center;box-shadow:0 40px 80px rgba(0,0,0,0.4)}
+.lbox::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.llogobox{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;margin:0 auto 20px;box-shadow:0 0 40px rgba(255,60,110,0.2)}
+.ltitle{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:8px}
+.lsub{color:var(--muted);font-size:13px;line-height:1.65;margin-bottom:24px}
+.linp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;margin-bottom:10px;text-align:center}
+.linp:focus{border-color:var(--accent)}
+.linp::placeholder{color:var(--dim);text-align:center}
+.lbtn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;margin-bottom:10px;box-shadow:0 8px 24px rgba(255,60,110,0.2)}
+.lbtn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,60,110,0.3)}
+.lerr{font-size:11px;color:var(--accent);min-height:16px;margin-bottom:8px}
+.lterms{font-size:10px;color:var(--dim);line-height:1.6}
+.lfeat{display:flex;align-items:center;gap:10px;margin-bottom:8px;text-align:left}
+.lfi{font-size:15px;width:20px;text-align:center}
+.lft{font-size:12px;color:var(--muted)}
+.lfeats{margin-bottom:20px}
+/* Toast */
+.twrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;min-width:250px;display:flex;align-items:center;gap:10px;font-size:13px;box-shadow:0 16px 40px rgba(0,0,0,0.5);animation:tin .3s ease}
+.toast.ok{border-color:rgba(0,229,122,0.25)}.toast.err{border-color:rgba(255,60,110,0.25)}.toast.info{border-color:rgba(157,92,255,0.25)}
+@keyframes tin{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes tout{from{transform:translateX(0);opacity:1}to{transform:translateX(60px);opacity:0}}
+/* Security */
+.secblk{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.secblk.gone{display:none}
+/* Spinner */
+.spin-anim{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Loading */
+.loading{position:fixed;inset:0;z-index:500;background:rgba(8,8,16,0.9);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading.gone{display:none}
+</style>
+</head>
+<body>
+
+<div class="secblk gone" id="secBlk">
+  <div style="font-size:48px">🛡️</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent)">ANTI-CHEAT TRIGGERED</div>
+  <div style="font-size:13px;color:var(--muted);text-align:center;max-width:340px;line-height:1.65">Suspicious activity detected. Your session has been flagged and logged.</div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spin-anim"></div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--muted)" id="loadMsg">CONNECTING...</div>
+</div>
+
+<div id="cur"></div><div id="cur2"></div>
+<div class="orb a"></div><div class="orb b"></div>
+
+<!-- LOGIN -->
+<div class="lscr gone" id="lscr">
+  <div class="lglow"></div>
+  <div class="lbox">
+    <div class="llogobox">GF</div>
+    <div class="ltitle">GROUPFLIP</div>
+    <div class="lsub">Wager Roblox groups in fair 1v1 flips and roulette rounds. No real money involved.</div>
+    <div class="lfeats">
+      <div class="lfeat"><span class="lfi">🏆</span><span class="lft">1v1 Coinflips & Roulette — groups only</span></div>
+      <div class="lfeat"><span class="lfi">🛡️</span><span class="lft">30-day ownership check + anti-cheat</span></div>
+      <div class="lfeat"><span class="lfi">🎖️</span><span class="lft">Earn Discord roles — Whale (25W) God (100W)</span></div>
+    </div>
+    <input class="linp" id="unameInp" placeholder="Enter your Roblox username" maxlength="20" autocomplete="off">
+    <div class="lerr" id="lerr"></div>
+    <button class="lbtn" id="lbtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M5 3.5L18.5 7 15 20.5 1.5 17z"/></svg>
+      Join GroupFlip
+    </button>
+    <div class="lterms">By joining you confirm you are 18+ and agree to our Terms of Service.</div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo"><div class="lmark">GF</div><div class="ltext">GROUP<em>FLIP</em></div></div>
+    <nav class="nav">
+      <div class="nsec">
+        <div class="nlbl">Games</div>
+        <div class="ni active" data-p="home"><span class="nic">⬡</span>Lobby<span class="nbadge live">LIVE</span></div>
+        <div class="ni" data-p="coinflip"><span class="nic">🪙</span>Coinflip</div>
+        <div class="ni" data-p="roulette"><span class="nic">🎡</span>Roulette</div>
+      </div>
+      <div class="nsec">
+        <div class="nlbl">Social</div>
+        <div class="ni" data-p="chat" style="position:relative"><span class="nic">💬</span>Live Chat<div class="ndot"></div></div>
+        <div class="ni" data-p="leaderboard"><span class="nic">📊</span>Leaderboard</div>
+      </div>
+      <div class="nsec">
+        <div class="nlbl">Account</div>
+        <div class="ni" data-p="profile"><span class="nic">👤</span>Profile</div>
+        <div class="ni" data-p="admin" id="adminNav" style="display:none"><span class="nic">⚙️</span>Admin<span class="nbadge red" id="pendBadge">0</span></div>
+      </div>
+    </nav>
+    <div class="susr">
+      <div class="uav" id="sAv">?</div>
+      <div>
+        <div class="uname" id="sName">Not logged in</div>
+        <div class="urank" id="sRank">—</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="ptitle" id="ptitle">LOBBY</div>
+      <div class="tpills">
+        <div class="pill"><div class="dot"></div><span style="color:var(--muted);font-size:10px">Online</span><span style="color:var(--green);font-weight:600" id="onlineCnt">0</span></div>
+        <div class="pill"><span style="color:var(--muted);font-size:10px">Total Flips</span><span style="font-weight:600" id="totalFlips">0</span></div>
+        <button class="btn bp bsm" onclick="nav('coinflip')">+ New Flip</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- HOME -->
+      <div class="page active" id="page-home">
+        <div class="sg">
+          <div class="st"><div class="sa a"></div><div class="slbl">Your Wins</div><div class="sval" id="hWins">0</div><div class="ssub up">keep climbing</div></div>
+          <div class="st"><div class="sa b"></div><div class="slbl">Active Flips</div><div class="sval" id="hActive">0</div><div class="ssub">right now</div></div>
+          <div class="st"><div class="sa c"></div><div class="slbl">Your Win Rate</div><div class="sval" id="hWR">—</div><div class="ssub" id="hWRsub">play to see</div></div>
+          <div class="st"><div class="sa d"></div><div class="slbl">Online Now</div><div class="sval" id="hOnline">0</div><div class="ssub">players</div></div>
+        </div>
+        <div class="gg">
+          <div class="gc cf" data-go="coinflip">
+            <span class="ge">🪙</span>
+            <div class="gn">COINFLIP</div>
+            <div class="gd">Pure 1v1. Pick heads or tails, wager your group. Winner takes both. 30-day ownership required.</div>
+            <div class="gtags"><span class="tag tlive">● LIVE</span><span class="tag thot">HOT</span><span class="tplrs" id="cfActiveCnt">0 active</span></div>
+          </div>
+          <div class="gc rl" data-go="roulette">
+            <span class="ge">🎡</span>
+            <div class="gn">ROULETTE</div>
+            <div class="gd">Bet your group on red, black, or green. Multiple players, one pot — winning color takes all.</div>
+            <div class="gtags"><span class="tag tlive">● LIVE</span><span class="tag tnew">NEW</span><span class="tplrs" id="rlActiveCnt">0 active</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">ACTIVE FLIPS</span><button class="btn bo bsm" data-go="coinflip">View all</button></div>
+          <table class="tbl"><thead><tr><th>Player</th><th>Group</th><th>Members</th><th>Status</th><th>Time</th><th></th></tr></thead>
+          <tbody id="flipsTable"></tbody></table>
+        </div>
+      </div>
+
+      <!-- COINFLIP -->
+      <div class="page" id="page-coinflip">
+        <div class="cfl">
+          <div>
+            <div class="arena">
+              <div class="cwrap"><div class="coin" id="coin"><div class="face fh">H</div><div class="face ft">T</div></div></div>
+              <div class="vsrow">
+                <div class="pbox you" id="p1">
+                  <div class="avsm" style="background:linear-gradient(135deg,var(--accent),var(--purple));width:34px;height:34px" id="p1av">?</div>
+                  <div class="pn" id="p1name">You</div>
+                  <div class="pg" id="p1group">—</div>
+                  <div class="ps" id="p1side" style="color:var(--gold)">— HEADS</div>
+                </div>
+                <div class="vsbdg">VS</div>
+                <div class="pbox empty" id="p2">
+                  <span style="font-size:24px">+</span>
+                  <div class="pn">Waiting...</div>
+                  <div class="pg">Share link to invite</div>
+                </div>
+              </div>
+              <div class="abtns">
+                <button class="btn bgold" id="flipBtn" disabled>🪙 Flip Now</button>
+                <button class="btn bo" id="shareBtn">🔗 Share Link</button>
+                <button class="btn bo bsm" id="cancelBtn">Cancel</button>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center" id="flipStatus"></div>
+              <div class="wbanner" id="wb">
+                <span class="wemoji" id="we">🏆</span>
+                <div class="wname" id="wn">You Win!</div>
+                <div class="wsub" id="ws">Group claimed!</div>
+                <button class="btn bp bsm" style="margin-top:14px" onclick="resetFlip()">New Flip</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="ch"><span class="ct">RECENT RESULTS</span></div>
+              <table class="tbl"><thead><tr><th>Winner</th><th>Loser</th><th>Result</th><th>Time</th></tr></thead>
+              <tbody id="recentFlips"></tbody></table>
+            </div>
+          </div>
+          <div class="spanel">
+            <div class="panel">
+              <div class="phd">Create Flip</div>
+              <div class="pbd">
+                <div class="ilbl">Group URL</div>
+                <input class="inp" id="gurl" placeholder="roblox.com/groups/12345...">
+                <div class="ilbl">Group Name</div>
+                <input class="inp" id="gname" placeholder="Shadow Army HQ">
+                <div class="ilbl">Member Count</div>
+                <input class="inp" id="gmem" placeholder="5000" type="number" min="1">
+                <div class="ilbl">Your Side</div>
+                <div class="schoice">
+                  <div class="scho h on" id="btnH" onclick="setSide('heads')">🌕 Heads</div>
+                  <div class="scho t" id="btnT" onclick="setSide('tails')">⚫ Tails</div>
+                </div>
+                <div class="warnbox">
+                  <div class="wtitle">⚠ OWNERSHIP VERIFICATION</div>
+                  <div class="wbody">Group must be owned 30+ days. Rolimons auto-check or upload audit screenshot.</div>
+                </div>
+                <button class="btn bp" style="width:100%" id="createBtn">Create Flip</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="phd">Open Challenges</div>
+              <div class="pbd" id="challenges"><div style="color:var(--muted);font-size:12px">No open flips</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROULETTE -->
+      <div class="page" id="page-roulette">
+        <div class="rll">
+          <div>
+            <div class="rla">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;align-self:flex-start;margin-bottom:6px">ROUND #<span id="roundNum">—</span></div>
+              <div style="font-size:12px;color:var(--muted);align-self:flex-start;margin-bottom:4px">Spinning in <span id="rlTimer" style="color:var(--accent2);font-family:'DM Mono',monospace;font-weight:600">0:30</span></div>
+              <div class="rswrap"><div class="rneedle"></div><div class="rstrip" id="rstrip"></div></div>
+              <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;align-self:flex-start">Pick a color — wager your group</div>
+              <div class="bzones" style="margin-bottom:20px">
+                <div class="bzone r" onclick="selectColor('red')"><div class="bzlbl">Red</div><div class="bzm">2x</div><div class="bzc" id="rcnt">0 bets</div></div>
+                <div class="bzone b" onclick="selectColor('black')"><div class="bzlbl">Black</div><div class="bzm">2x</div><div class="bzc" id="bcnt">0 bets</div></div>
+                <div class="bzone g" onclick="selectColor('green')"><div class="bzlbl">Green</div><div class="bzm">14x</div><div class="bzc" id="gcnt">0 bets</div></div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Selected: <span id="colorSel" style="font-family:'DM Mono',monospace;color:var(--accent)">none</span></div>
+              <button class="btn bp" id="betBtn">Place My Bet</button>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="ch"><span class="ct">ROUND HISTORY</span></div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;padding:14px 18px" id="rlHistory"></div>
+            </div>
+          </div>
+          <div class="spanel">
+            <div class="panel">
+              <div class="phd">Your Bet</div>
+              <div class="pbd">
+                <div class="ilbl">Group URL</div>
+                <input class="inp" id="rlUrl" placeholder="roblox.com/groups/...">
+                <div class="ilbl">Group Name</div>
+                <input class="inp" id="rlName" placeholder="My Group">
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Pot Breakdown</div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--accent)">Red</span><span style="font-size:12px;font-family:'DM Mono',monospace" id="redPct">0%</span></div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--muted)">Black</span><span style="font-size:12px;font-family:'DM Mono',monospace" id="blackPct">0%</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--green)">Green</span><span style="font-size:12px;font-family:'DM Mono',monospace" id="greenPct">0%</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="phd">Current Bettors</div>
+              <div id="bettorsList" style="padding:10px;max-height:240px;overflow-y:auto"><div style="color:var(--muted);font-size:12px;padding:4px">No bets yet</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="page" id="page-chat">
+        <div class="chl">
+          <div class="chm">
+            <div class="ch" style="padding:14px 20px"><span class="ct">LIVE CHAT</span><span style="font-size:11px;color:var(--green);font-family:'DM Mono',monospace">● <span id="chatOnline">0</span> online</span></div>
+            <div class="msgs" id="chatMsgs"></div>
+            <div class="cinrow">
+              <input class="cinp" id="chatInp" placeholder="Say something..." maxlength="500">
+              <button class="btn bp bsm" id="chatSend">Send</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="panel">
+              <div class="phd">Online <span id="onlineCount2" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green)">0</span></div>
+              <div class="onl" id="onlineList" style="max-height:220px;overflow-y:auto"></div>
+            </div>
+            <div class="panel">
+              <div class="phd">Discord Roles</div>
+              <div class="pbd">
+                <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Hit win milestones to earn Discord roles automatically.</div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px">🎖️ Whale</span><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">25+ wins</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:12px">👑 God</span><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">100+ wins</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="page" id="page-leaderboard">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+          <div class="card"><div class="ch"><span class="ct">🏆 TOP WINS</span></div><div id="lbWins"></div></div>
+          <div class="card"><div class="ch"><span class="ct">📊 TOP WIN RATE</span><span style="font-size:10px;color:var(--muted)">(min 3 flips)</span></div><div id="lbWR"></div></div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="page" id="page-profile">
+        <div class="phero">
+          <div class="ptop">
+            <div class="avlg" id="profAv">?</div>
+            <div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-bottom:6px" id="profName">—</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px" id="profBadges"></div>
+              <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace" id="profMeta">—</div>
+            </div>
+          </div>
+          <div class="psg">
+            <div class="pst"><div class="psv" style="color:var(--green)" id="profWins">0</div><div class="psl">Wins</div></div>
+            <div class="pst"><div class="psv" style="color:var(--accent)" id="profLosses">0</div><div class="psl">Losses</div></div>
+            <div class="pst"><div class="psv" style="color:var(--gold)" id="profWR">—</div><div class="psl">Win Rate</div></div>
+            <div class="pst"><div class="psv" style="color:var(--cyan)" id="profTotal">0</div><div class="psl">Total Flips</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">MY FLIP HISTORY</span></div>
+          <table class="tbl"><thead><tr><th>Result</th><th>Opponent</th><th>Group Wagered</th><th>Time</th></tr></thead>
+          <tbody id="myHistory"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="page-admin">
+        <div class="agrid">
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="ch"><span class="ct">PENDING VERIFS</span><span class="nbadge red" id="pendCount">0</span></div>
+              <div style="padding:14px" id="pendList"><div style="color:var(--muted);font-size:12px">None pending</div></div>
+            </div>
+            <div class="card">
+              <div class="ch"><span class="ct">STATS</span></div>
+              <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="pst"><div class="psv" id="aTotalFlips">0</div><div class="psl">Total Flips</div></div>
+                <div class="pst"><div class="psv" id="aTotalUsers">0</div><div class="psl">Users</div></div>
+                <div class="pst"><div class="psv" id="aActiveFlips">0</div><div class="psl">Active Now</div></div>
+                <div class="pst"><div class="psv" style="color:var(--green)">$0</div><div class="psl">Real Money</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="ch"><span class="ct">ALL USERS</span></div>
+              <div style="padding:14px;max-height:320px;overflow-y:auto" id="adminUsers"></div>
+            </div>
+            <div class="card">
+              <div class="ch"><span class="ct">OPEN FLIPS</span></div>
+              <div style="padding:14px;max-height:200px;overflow-y:auto" id="adminFlips"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="twrap" id="twrap"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, updateDoc, getDoc, getDocs,
+  onSnapshot, query, orderBy, limit, where, serverTimestamp, increment, runTransaction, deleteDoc
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── Config ───────────────────────────────────────────────────────────────────
+const app  = initializeApp({
+  apiKey:"AIzaSyDnICcI6YKkdDvZDz3bPurDsQXsO5ItAXI",
+  authDomain:"groupflip-9384d.firebaseapp.com",
+  projectId:"groupflip-9384d",
+  storageBucket:"groupflip-9384d.firebasestorage.app",
+  messagingSenderId:"364271164890",
+  appId:"1:364271164890:web:b8a37e34942a2ac18bf4e3"
+});
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── Anti-Cheat ────────────────────────────────────────────────────────────────
+const AC = {
+  v:0, max:3, lock:false, lastFlip:0,
+  rate(){ const n=Date.now(); if(n-this.lastFlip<5000){this.flag('rate_limit');return false} this.lastFlip=n; return true },
+  flag(r){ this.v++; if(this.v>=this.max)this.block(); else toast('⚠ Warning: suspicious activity ('+this.v+'/'+this.max+')','err') },
+  block(){ document.getElementById('secBlk').classList.remove('gone'); setTimeout(()=>location.reload(),8000) },
+  init(){
+    document.addEventListener('contextmenu',e=>{e.preventDefault();this.flag('right_click')});
+    document.addEventListener('keydown',e=>{
+      if((e.ctrlKey&&e.shiftKey&&'IJCU'.includes(e.key.toUpperCase()))||
+         (e.metaKey&&e.altKey&&'IJC'.includes(e.key.toUpperCase()))||
+         e.key==='F12'){e.preventDefault();this.flag('inspect')}
+    });
+    setInterval(()=>{if(window.outerWidth-window.innerWidth>160||window.outerHeight-window.innerHeight>160)this.flag('devtools')},5000);
+  }
+};
+AC.init();
+
+// ── Cursor ────────────────────────────────────────────────────────────────────
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function a(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cur2.style.left=rx+'px';cur2.style.top=ry+'px';requestAnimationFrame(a)})();
+document.addEventListener('mousedown',()=>{cur.style.width='6px';cur.style.height='6px'});
+document.addEventListener('mouseup',()=>{cur.style.width='10px';cur.style.height='10px'});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg,t='ok'){
+  const icons={ok:'✅',err:'❌',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className='toast '+t;
+  el.innerHTML='<span>'+icons[t]+'</span><span>'+san(msg)+'</span>';
+  document.getElementById('twrap').appendChild(el);
+  setTimeout(()=>{el.style.animation='tout .3s ease forwards';setTimeout(()=>el.remove(),300)},3500);
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+const TITLES={home:'LOBBY',coinflip:'COINFLIP',roulette:'ROULETTE',chat:'LIVE CHAT',leaderboard:'LEADERBOARD',profile:'PROFILE',admin:'ADMIN PANEL'};
+window.nav=p=>{
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
+  const el=document.getElementById('page-'+p); if(el)el.classList.add('active');
+  document.getElementById('ptitle').textContent=TITLES[p]||p.toUpperCase();
+  document.querySelectorAll('.ni[data-p="'+p+'"]').forEach(n=>n.classList.add('active'));
+};
+document.querySelectorAll('.ni[data-p]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.p)));
+document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.go)));
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function san(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+function timeAgo(ts){
+  if(!ts)return'—';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  const s=Math.floor((Date.now()-d)/1000);
+  if(s<60)return s+'s ago';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+const RANK_COLOR={owner:'var(--accent)',god:'var(--gold)',whale:'var(--cyan)',staff:'var(--purple)',manager:'var(--purple)',user:'var(--muted)'};
+const RANK_CLASS={owner:'rco',god:'rcg',whale:'rcw',staff:'rcs',manager:'rcs'};
+function rankChip(r){if(!r||r==='user')return'';return'<span class="rchip '+( RANK_CLASS[r]||'')+'" >'+r.toUpperCase()+'</span>'}
+function rankColor(r){return RANK_COLOR[r]||'var(--muted)'}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let ME=null, AUTH=null;
+let currentFlipId=null, flipSide='heads';
+let currentRound=null, selectedColor=null;
+let rlCountdown=30;
+let unsubs=[];
+
+// ── Auth state ────────────────────────────────────────────────────────────────
+function showLoading(msg){document.getElementById('loadMsg').textContent=msg||'LOADING...';document.getElementById('loading').classList.remove('gone')}
+function hideLoading(){document.getElementById('loading').classList.add('gone')}
+
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    AUTH=user;
+    const snap=await getDoc(doc(db,'users',user.uid));
+    if(snap.exists()){
+      ME={id:user.uid,...snap.data()};
+      // Update last seen
+      await updateDoc(doc(db,'users',user.uid),{lastSeen:serverTimestamp(),online:true});
+      initUI();
+      initRealtime();
+      hideLoading();
+    } else {
+      hideLoading();
+      document.getElementById('lscr').classList.remove('gone');
+    }
+  } else {
+    AUTH=null; ME=null;
+    hideLoading();
+    document.getElementById('lscr').classList.remove('gone');
+  }
+});
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+document.getElementById('unameInp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('lbtn').addEventListener('click',doLogin);
+
+async function doLogin(){
+  const inp=document.getElementById('unameInp');
+  const raw=inp.value.trim();
+  const username=raw.replace(/[^a-zA-Z0-9_]/g,'').substring(0,20);
+  const err=document.getElementById('lerr');
+  if(username.length<3){err.textContent='Username must be at least 3 characters.';return}
+  err.textContent='';
+  document.getElementById('lbtn').textContent='Joining...';
+  document.getElementById('lbtn').disabled=true;
+  showLoading('CREATING ACCOUNT...');
+  document.getElementById('lscr').classList.add('gone');
+  try{
+    // Check username availability
+    const taken=await getDocs(query(collection(db,'users'),where('username','==',username),limit(1)));
+    const cred=await signInAnonymously(auth);
+    const uid=cred.user.uid;
+    if(!taken.empty && taken.docs[0].id!==uid){
+      hideLoading();
+      document.getElementById('lscr').classList.remove('gone');
+      err.textContent='Username taken. Try another.';
+      document.getElementById('lbtn').textContent='Join GroupFlip';
+      document.getElementById('lbtn').disabled=false;
+      return;
+    }
+    await setDoc(doc(db,'users',uid),{
+      username,rank:'user',wins:0,losses:0,
+      createdAt:serverTimestamp(),lastSeen:serverTimestamp(),online:true
+    },{merge:true});
+    ME={id:uid,username,rank:'user',wins:0,losses:0};
+    initUI(); initRealtime();
+    hideLoading();
+    toast('Welcome, '+username+'! 🎉');
+  }catch(e){
+    hideLoading();
+    document.getElementById('lscr').classList.remove('gone');
+    err.textContent='Error: '+e.message;
+    document.getElementById('lbtn').textContent='Join GroupFlip';
+    document.getElementById('lbtn').disabled=false;
+  }
+}
+
+// Mark offline on close
+window.addEventListener('beforeunload',()=>{
+  if(ME)updateDoc(doc(db,'users',ME.id),{online:false,lastSeen:serverTimestamp()}).catch(()=>{});
+});
+
+// ── Init UI ───────────────────────────────────────────────────────────────────
+function initUI(){
+  if(!ME)return;
+  document.getElementById('sAv').textContent=ME.username[0].toUpperCase();
+  document.getElementById('sName').textContent=ME.username;
+  document.getElementById('sRank').textContent='★ '+(ME.rank||'USER').toUpperCase();
+  document.getElementById('sRank').style.color=rankColor(ME.rank);
+  document.getElementById('p1av').textContent=ME.username[0].toUpperCase();
+  document.getElementById('p1name').textContent=ME.username;
+  if(['owner','staff','manager'].includes(ME.rank)){
+    document.getElementById('adminNav').style.display='flex';
+    loadAdminData();
+  }
+  updateProfileUI();
+  updateHomeStats();
+}
+
+function updateHomeStats(){
+  if(!ME)return;
+  const w=ME.wins||0,l=ME.losses||0,t=w+l;
+  document.getElementById('hWins').textContent=w;
+  document.getElementById('hWR').textContent=t>0?Math.round(w/t*100)+'%':'—';
+  document.getElementById('hWRsub').textContent=t>0?w+'W / '+l+'L':'play to see';
+}
+
+function updateProfileUI(){
+  if(!ME)return;
+  const w=ME.wins||0,l=ME.losses||0,t=w+l;
+  document.getElementById('profAv').textContent=ME.username[0].toUpperCase();
+  document.getElementById('profName').textContent=ME.username.toUpperCase();
+  document.getElementById('profWins').textContent=w;
+  document.getElementById('profLosses').textContent=l;
+  document.getElementById('profWR').textContent=t>0?Math.round(w/t*100)+'%':'—';
+  document.getElementById('profTotal').textContent=t;
+  document.getElementById('profBadges').innerHTML=rankChip(ME.rank);
+  document.getElementById('profMeta').textContent='GroupFlip member · '+w+' wins';
+}
+
+// ── Realtime ──────────────────────────────────────────────────────────────────
+function initRealtime(){
+  unsubs.forEach(u=>u());unsubs=[];
+
+  // Open flips
+  const q1=query(collection(db,'flips'),where('status','==','open'),orderBy('createdAt','desc'),limit(30));
+  unsubs.push(onSnapshot(q1,snap=>{
+    const flips=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderFlipsTable(flips);
+    renderChallenges(flips);
+    document.getElementById('hActive').textContent=flips.length;
+    document.getElementById('cfActiveCnt').textContent=flips.length+' active';
+  }));
+
+  // Chat
+  const q2=query(collection(db,'chat'),orderBy('createdAt','asc'),limit(60));
+  unsubs.push(onSnapshot(q2,snap=>{
+    renderChat(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }));
+
+  // Leaderboard
+  const q3=query(collection(db,'users'),orderBy('wins','desc'),limit(10));
+  unsubs.push(onSnapshot(q3,snap=>{
+    renderLB(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }));
+
+  // Total flips count
+  unsubs.push(onSnapshot(collection(db,'flips'),snap=>{
+    document.getElementById('totalFlips').textContent=snap.size;
+    document.getElementById('aTotalFlips').textContent=snap.size;
+    document.getElementById('aActiveFlips').textContent=snap.docs.filter(d=>['open','active'].includes(d.data().status)).length;
+  }));
+
+  // Recent completed flips
+  const q4=query(collection(db,'flips'),where('status','==','complete'),orderBy('resolvedAt','desc'),limit(10));
+  unsubs.push(onSnapshot(q4,snap=>{
+    renderRecentFlips(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }));
+
+  // My flip history
+  if(ME){
+    const q5=query(collection(db,'flips'),where('players','array-contains',ME.id),orderBy('createdAt','desc'),limit(20));
+    unsubs.push(onSnapshot(q5,snap=>{
+      renderMyHistory(snap.docs.map(d=>({id:d.id,...d.data()})));
+    }));
+  }
+
+  // Online users
+  const q6=query(collection(db,'users'),where('online','==',true));
+  unsubs.push(onSnapshot(q6,snap=>{
+    const users=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const cnt=users.length;
+    ['onlineCnt','chatOnline','onlineCount2','hOnline'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.textContent=cnt;
+    });
+    renderOnlineList(users);
+  }));
+
+  // Roulette current round
+  const q7=query(collection(db,'roulette_rounds'),where('status','==','betting'),orderBy('createdAt','desc'),limit(1));
+  unsubs.push(onSnapshot(q7,snap=>{
+    if(snap.empty){ensureRouletteRound();return}
+    const rd={id:snap.docs[0].id,...snap.docs[0].data()};
+    currentRound=rd;
+    document.getElementById('roundNum').textContent=rd.roundNumber||'?';
+    const bets=rd.bets||{};
+    updateBetCounts(bets);
+    renderBettors(bets);
+  }));
+
+  // Roulette history
+  const q8=query(collection(db,'roulette_rounds'),where('status','==','complete'),orderBy('createdAt','desc'),limit(20));
+  unsubs.push(onSnapshot(q8,snap=>{
+    renderRlHistory(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }));
+}
+
+// ── Renders ───────────────────────────────────────────────────────────────────
+function renderFlipsTable(flips){
+  const tb=document.getElementById('flipsTable');
+  if(!flips.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No active flips — create one!</td></tr>';return}
+  tb.innerHTML=flips.map(f=>`
+    <tr>
+      <td><div class="uc"><div class="avsm" style="background:${rankColor(f.creatorRank)}">${san(f.creatorName||'?')[0]}</div><span style="font-weight:500">${san(f.creatorName||'?')}</span></div></td>
+      <td><span class="gpill">${san(f.creatorGroupName||'—')}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${san(f.creatorGroupMembers||'?')}</td>
+      <td><span class="sbdg open">● OPEN</span></td>
+      <td style="color:var(--dim);font-size:11px;font-family:'DM Mono',monospace">${timeAgo(f.createdAt)}</td>
+      <td>${f.creatorId!==ME?.id?'<button class="btn bo bsm" onclick="joinFlip(\''+f.id+'\')">Join</button>':'<span style="font-size:11px;color:var(--muted)">Yours</span>'}</td>
+    </tr>`).join('');
+}
+
+function renderChallenges(flips){
+  const el=document.getElementById('challenges');
+  const others=flips.filter(f=>f.creatorId!==ME?.id).slice(0,5);
+  if(!others.length){el.innerHTML='<div style="color:var(--muted);font-size:12px">No open challenges</div>';return}
+  el.innerHTML=others.map(f=>`
+    <div class="pitem" style="margin-bottom:8px">
+      <div class="pi"><div class="pin">${san(f.creatorName||'?')}</div><div class="pid">${san(f.creatorGroupName||'?')} · ${san(f.creatorGroupMembers||'?')} members</div></div>
+      <button class="btn bo bsm" onclick="joinFlip('${f.id}')">Join</button>
+    </div>`).join('');
+}
+
+function renderRecentFlips(flips){
+  const tb=document.getElementById('recentFlips');
+  if(!flips.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">No flips yet</td></tr>';return}
+  tb.innerHTML=flips.map(f=>`
+    <tr>
+      <td style="color:var(--green);font-weight:600">${san(f.winnerName||'?')}</td>
+      <td style="color:var(--muted)">${san(f.loserName||'?')}</td>
+      <td><span class="gpill">${san(f.result||'?').toUpperCase()}</span></td>
+      <td style="color:var(--dim);font-size:11px;font-family:'DM Mono',monospace">${timeAgo(f.resolvedAt)}</td>
+    </tr>`).join('');
+}
+
+function renderChat(msgs){
+  const c=document.getElementById('chatMsgs');
+  const atBottom=c.scrollHeight-c.clientHeight<=c.scrollTop+80;
+  c.innerHTML=msgs.filter(m=>!m.deleted).map(m=>`
+    <div class="msg">
+      <div class="mav" style="background:${rankColor(m.rank)}">${san(m.username||'?')[0]}</div>
+      <div>
+        <div class="mhd">
+          <span class="mu" style="color:${rankColor(m.rank)}">${san(m.username||'?')}</span>
+          ${rankChip(m.rank)}
+          <span class="mt">${timeAgo(m.createdAt)}</span>
+        </div>
+        <div class="mx">${san(m.text||'')}</div>
+      </div>
+    </div>`).join('');
+  if(atBottom)c.scrollTop=c.scrollHeight;
+}
+
+function renderOnlineList(users){
+  const el=document.getElementById('onlineList');
+  el.innerHTML=users.map(u=>`
+    <div class="olitem">
+      <div class="oldot"></div>
+      <span style="font-size:12.5px;flex:1">${san(u.username||'?')}</span>
+      ${rankChip(u.rank)}
+    </div>`).join('');
+}
+
+function renderLB(users){
+  const cls=['g','s','b'];
+  const lbw=document.getElementById('lbWins');
+  lbw.innerHTML=users.map((u,i)=>`
+    <div class="lbrow">
+      <div class="lbn ${cls[i]||''}">${i+1}</div>
+      <div class="avsm" style="background:${rankColor(u.rank)};font-size:11px">${(u.username||'?')[0]}</div>
+      <div class="lbi"><div class="lbname">${san(u.username||'?')}</div><div class="lbdet">${u.losses||0} losses</div></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${i===0?'var(--gold)':i===1?'#b0b8c8':i===2?'#cd7f32':'var(--text)'}">
+        ${u.wins||0}<span style="font-size:10px;color:var(--muted);font-family:'DM Sans',sans-serif;display:block">wins</span>
+      </div>
+    </div>`).join('');
+
+  const lbwr=document.getElementById('lbWR');
+  const sorted=[...users].filter(u=>(u.wins||0)+(u.losses||0)>=3).sort((a,b)=>{
+    const wa=(a.wins||0)/((a.wins||0)+(a.losses||0));
+    const wb=(b.wins||0)/((b.wins||0)+(b.losses||0));
+    return wb-wa;
+  });
+  lbwr.innerHTML=sorted.map((u,i)=>{
+    const t=(u.wins||0)+(u.losses||0);
+    const wr=t>0?Math.round((u.wins||0)/t*100):0;
+    return`<div class="lbrow">
+      <div class="lbn ${cls[i]||''}">${i+1}</div>
+      <div class="avsm" style="background:${rankColor(u.rank)};font-size:11px">${(u.username||'?')[0]}</div>
+      <div class="lbi"><div class="lbname">${san(u.username||'?')}</div><div class="lbdet">${u.wins||0}W · ${u.losses||0}L</div></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${i===0?'var(--gold)':i===1?'#b0b8c8':i===2?'#cd7f32':'var(--text)'}">
+        ${wr}%<span style="font-size:10px;color:var(--muted);font-family:'DM Sans',sans-serif;display:block">wr</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMyHistory(flips){
+  const tb=document.getElementById('myHistory');
+  if(!flips.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">No flips yet</td></tr>';return}
+  tb.innerHTML=flips.map(f=>{
+    if(f.status==='open')return`<tr><td colspan="4" style="color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;padding:12px 18px">OPEN — waiting for challenger</td></tr>`;
+    if(f.status==='active')return`<tr><td colspan="4" style="color:var(--cyan);font-family:'DM Mono',monospace;font-size:11px;padding:12px 18px">IN PROGRESS</td></tr>`;
+    const won=f.winnerId===ME?.id;
+    const opp=won?f.loserName:f.winnerName;
+    return`<tr>
+      <td style="color:${won?'var(--green)':'var(--accent)'};font-weight:600">${won?'WIN':'LOSS'}</td>
+      <td>${san(opp||'?')}</td>
+      <td><span class="gpill">${san(won?f.winnerGroupName:f.loserGroupName)||'—'}</span></td>
+      <td style="color:var(--dim);font-size:11px;font-family:'DM Mono',monospace">${timeAgo(f.resolvedAt||f.createdAt)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Chat Send ─────────────────────────────────────────────────────────────────
+document.getElementById('chatSend').addEventListener('click',sendChat);
+document.getElementById('chatInp').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+async function sendChat(){
+  if(!ME){toast('Login first','err');return}
+  const inp=document.getElementById('chatInp');
+  const text=inp.value.trim();
+  if(!text||text.length>500)return;
+  inp.value='';
+  try{
+    await addDoc(collection(db,'chat'),{
+      text,userId:ME.id,username:ME.username,rank:ME.rank||'user',
+      createdAt:serverTimestamp(),deleted:false
+    });
+  }catch(e){toast('Send failed','err')}
+}
+
+// ── Coinflip ──────────────────────────────────────────────────────────────────
+window.setSide=s=>{
+  flipSide=s;
+  document.getElementById('btnH').classList.toggle('on',s==='heads');
+  document.getElementById('btnT').classList.toggle('on',s==='tails');
+  document.getElementById('p1side').textContent='— '+s.toUpperCase();
+  document.getElementById('p1side').style.color=s==='heads'?'var(--gold)':'var(--muted)';
+};
+
+document.getElementById('createBtn').addEventListener('click',async()=>{
+  if(!ME){toast('Login first','err');return}
+  if(!AC.rate())return;
+  const url=document.getElementById('gurl').value.trim();
+  const name=document.getElementById('gname').value.trim();
+  const mem=document.getElementById('gmem').value.trim();
+  if(!url||!name){toast('Fill in group URL and name','err');return}
+  if(!url.includes('roblox.com/groups/')){toast('Invalid Roblox group URL','err');return}
+  document.getElementById('createBtn').textContent='Creating...';
+  document.getElementById('createBtn').disabled=true;
+  try{
+    const ref=await addDoc(collection(db,'flips'),{
+      creatorId:ME.id,creatorName:ME.username,creatorRank:ME.rank||'user',
+      creatorSide:flipSide,creatorGroupUrl:url,creatorGroupName:name,
+      creatorGroupMembers:mem||'?',status:'open',
+      players:[ME.id],createdAt:serverTimestamp()
+    });
+    currentFlipId=ref.id;
+    document.getElementById('p1group').textContent=name;
+    document.getElementById('flipStatus').textContent='Flip created! Share the link for someone to join.';
+    document.getElementById('flipBtn').disabled=false;
+    watchFlip(ref.id);
+    toast('Flip created!','ok');
+  }catch(e){toast('Failed: '+e.message,'err')}
+  document.getElementById('createBtn').textContent='Create Flip';
+  document.getElementById('createBtn').disabled=false;
+});
+
+window.joinFlip=async flipId=>{
+  if(!ME){toast('Login first','err');return}
+  nav('coinflip');
+  const name=prompt('Your group name:');if(!name)return;
+  const url=prompt('Your group URL:');
+  if(!url||!url.includes('roblox.com/groups/')){toast('Invalid URL','err');return}
+  const mem=prompt('Member count (optional):');
+  try{
+    const snap=await getDoc(doc(db,'flips',flipId));
+    if(!snap.exists()||snap.data().status!=='open'){toast('Flip no longer available','err');return}
+    if(snap.data().creatorId===ME.id){toast('Cannot join your own flip','err');return}
+    await updateDoc(doc(db,'flips',flipId),{
+      challengerId:ME.id,challengerName:ME.username,challengerRank:ME.rank||'user',
+      challengerGroupName:name,challengerGroupUrl:url,challengerGroupMembers:mem||'?',
+      status:'active',players:[snap.data().creatorId,ME.id]
+    });
+    currentFlipId=flipId;
+    // Update P2 box
+    document.getElementById('p2').className='pbox them';
+    document.getElementById('p2').innerHTML=`<div class="avsm" style="background:var(--purple);width:34px;height:34px">${ME.username[0]}</div><div class="pn">${san(ME.username)}</div><div class="pg">${san(name)}</div><div class="ps" style="color:var(--muted)">— TAILS</div>`;
+    document.getElementById('flipBtn').disabled=false;
+    document.getElementById('flipStatus').textContent='You joined! Both players ready — flip!';
+    watchFlip(flipId);
+    toast('Joined flip!','ok');
+  }catch(e){toast('Failed: '+e.message,'err')}
+};
+
+function watchFlip(id){
+  const unsub=onSnapshot(doc(db,'flips',id),snap=>{
+    if(!snap.exists())return;
+    const f={id:snap.id,...snap.data()};
+    // Someone joined
+    if(f.challengerName&&document.getElementById('p2').classList.contains('empty')){
+      document.getElementById('p2').className='pbox them';
+      document.getElementById('p2').innerHTML=`<div class="avsm" style="background:var(--purple);width:34px;height:34px">${f.challengerName[0]}</div><div class="pn">${san(f.challengerName)}</div><div class="pg">${san(f.challengerGroupName||'')}</div><div class="ps" style="color:var(--muted)">— TAILS</div>`;
+      document.getElementById('flipBtn').disabled=false;
+      document.getElementById('flipStatus').textContent='Challenger joined! Time to flip!';
+      toast(f.challengerName+' joined!','info');
+    }
+    // Flip complete
+    if(f.status==='complete'&&f.winnerId){
+      const won=f.winnerId===ME?.id;
+      document.getElementById('we').textContent=won?'🏆':'💀';
+      document.getElementById('wn').textContent=won?'YOU WIN!':san(f.winnerName)+' Wins!';
+      document.getElementById('ws').textContent=won?'You claimed '+san(f.winnerGroupName)+'!':'They took your group.';
+      document.getElementById('wb').classList.add('show');
+      // Refresh my stats
+      getDoc(doc(db,'users',ME.id)).then(s=>{if(s.exists()){ME={id:ME.id,...s.data()};updateHomeStats();updateProfileUI()}});
+    }
+  });
+  unsubs.push(unsub);
+}
+
+document.getElementById('flipBtn').addEventListener('click',async()=>{
+  if(!ME||!currentFlipId){toast('No active flip','err');return}
+  if(AC.lock){toast('Flip in progress','info');return}
+  if(!AC.rate())return;
+  AC.lock=true;
+  const coin=document.getElementById('coin');
+  coin.classList.remove('spin');void coin.offsetWidth;coin.classList.add('spin');
+  document.getElementById('wb').classList.remove('show');
+  try{
+    const snap=await getDoc(doc(db,'flips',currentFlipId));
+    if(!snap.exists()){toast('Flip not found','err');AC.lock=false;return}
+    const f=snap.data();
+    if(f.status!=='active'){toast(f.status==='open'?'Waiting for challenger':'Flip already done','info');AC.lock=false;coin.classList.remove('spin');return}
+
+    // Server-side randomness
+    const rand=new Uint8Array(1);crypto.getRandomValues(rand);
+    const result=rand[0]%2===0?'heads':'tails';
+    const winnerId=result===f.creatorSide?f.creatorId:f.challengerId;
+    const loserId=winnerId===f.creatorId?f.challengerId:f.creatorId;
+    const winnerName=winnerId===f.creatorId?f.creatorName:f.challengerName;
+    const loserName=loserId===f.creatorId?f.creatorName:f.challengerName;
+    const winnerGroup=winnerId===f.creatorId?f.creatorGroupName:f.challengerGroupName;
+    const loserGroup=loserId===f.creatorId?f.creatorGroupName:f.challengerGroupName;
+
+    await runTransaction(db,async t=>{
+      t.update(doc(db,'flips',currentFlipId),{
+        status:'complete',result,winnerId,loserId,winnerName,loserName,
+        winnerGroupName:winnerGroup,loserGroupName:loserGroup,resolvedAt:serverTimestamp()
+      });
+      t.update(doc(db,'users',winnerId),{wins:increment(1)});
+      t.update(doc(db,'users',loserId),{losses:increment(1)});
+    });
+
+    // Check rank milestone
+    setTimeout(async()=>{
+      const ws=await getDoc(doc(db,'users',winnerId));
+      if(ws.exists()){
+        const wd=ws.data();
+        let newRank=wd.rank;
+        if(!['owner','staff','manager'].includes(wd.rank)){
+          if((wd.wins||0)>=100)newRank='god';
+          else if((wd.wins||0)>=25)newRank='whale';
+        }
+        if(newRank!==wd.rank){
+          await updateDoc(doc(db,'users',winnerId),{rank:newRank});
+          if(winnerId===ME.id){ME.rank=newRank;toast('🎉 You earned '+newRank.toUpperCase()+' rank!','ok')}
+        }
+      }
+    },1000);
+
+    setTimeout(()=>{AC.lock=false;coin.classList.remove('spin')},1600);
+  }catch(e){toast('Flip failed: '+e.message,'err');AC.lock=false;coin.classList.remove('spin')}
+});
+
+window.resetFlip=()=>{
+  document.getElementById('wb').classList.remove('show');
+  document.getElementById('p2').className='pbox empty';
+  document.getElementById('p2').innerHTML='<span style="font-size:24px">+</span><div class="pn">Waiting...</div><div class="pg">Share link to invite</div>';
+  document.getElementById('p1group').textContent='—';
+  document.getElementById('gurl').value='';document.getElementById('gname').value='';document.getElementById('gmem').value='';
+  document.getElementById('flipBtn').disabled=true;document.getElementById('flipStatus').textContent='';
+  AC.lock=false;currentFlipId=null;
+};
+document.getElementById('cancelBtn').addEventListener('click',resetFlip);
+document.getElementById('shareBtn').addEventListener('click',()=>{
+  if(!currentFlipId){toast('Create a flip first','err');return}
+  const url=location.href.split('?')[0]+'?flip='+currentFlipId;
+  navigator.clipboard?.writeText(url).then(()=>toast('Link copied!','ok')).catch(()=>toast('Your flip ID: '+currentFlipId,'info'));
+});
+
+// Auto-join from URL
+const qp=new URLSearchParams(location.search);
+if(qp.get('flip')){const fid=qp.get('flip');setTimeout(()=>{if(ME)joinFlip(fid);else setTimeout(()=>{if(ME)joinFlip(fid)},3000)},1000)}
+
+// ── Roulette ──────────────────────────────────────────────────────────────────
+const RLC=['r','r','r','r','r','r','r','b','b','b','b','b','b','b','g'];
+const GRS=['ShadowArmy','VoidGuild','NeonDist','Kingdom','EliteForce','Ghost','Pixel','Royal'];
+function buildStrip(){
+  const s=document.getElementById('rstrip');if(!s)return;
+  s.innerHTML=Array.from({length:80},()=>{const c=RLC[Math.floor(Math.random()*RLC.length)];return'<div class="rtile '+c+'">'+GRS[Math.floor(Math.random()*GRS.length)]+'</div>'}).join('');
+}
+buildStrip();
+
+function renderRlHistory(rounds){
+  const el=document.getElementById('rlHistory');if(!el)return;
+  const l={r:'R',b:'B',g:'G'};
+  const colorMap={red:'r',black:'b',green:'g'};
+  el.innerHTML=rounds.map(r=>{
+    const c=colorMap[r.result]||'b';
+    return'<div class="rtile '+c+'" style="width:36px;height:36px;font-size:12px;font-weight:700">'+(l[c]||'?')+'</div>';
+  }).join('');
+}
+
+function updateBetCounts(bets){
+  const counts={red:0,black:0,green:0};
+  Object.values(bets).forEach(b=>{counts[b.color]=(counts[b.color]||0)+1});
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  document.getElementById('rcnt').textContent=counts.red+' bets';
+  document.getElementById('bcnt').textContent=counts.black+' bets';
+  document.getElementById('gcnt').textContent=counts.green+' bets';
+  document.getElementById('rlActiveCnt').textContent=total+' active';
+  document.getElementById('redPct').textContent=total?Math.round(counts.red/total*100)+'%':'0%';
+  document.getElementById('blackPct').textContent=total?Math.round(counts.black/total*100)+'%':'0%';
+  document.getElementById('greenPct').textContent=total?Math.round(counts.green/total*100)+'%':'0%';
+}
+
+function renderBettors(bets){
+  const el=document.getElementById('bettorsList');if(!el)return;
+  const entries=Object.entries(bets);
+  if(!entries.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:4px">No bets yet</div>';return}
+  const cc={red:'var(--accent)',black:'var(--muted)',green:'var(--green)'};
+  el.innerHTML=entries.map(([uid,b])=>`
+    <div class="olitem">
+      <div class="oldot" style="background:${cc[b.color]||'var(--muted)'}"></div>
+      <span style="font-size:12px;flex:1">${san(b.username||'?')}</span>
+      <span style="font-size:10px;color:${cc[b.color]};font-family:'DM Mono',monospace">${b.color?.toUpperCase()}</span>
+    </div>`).join('');
+}
+
+window.selectColor=c=>{
+  selectedColor=c;
+  document.getElementById('colorSel').textContent=c.toUpperCase();
+  document.getElementById('colorSel').style.color={red:'var(--accent)',black:'var(--muted)',green:'var(--green)'}[c];
+};
+
+document.getElementById('betBtn').addEventListener('click',async()=>{
+  if(!ME){toast('Login first','err');return}
+  if(!selectedColor){toast('Select a color first','err');return}
+  if(!currentRound||currentRound.status!=='betting'){toast('No active betting round','err');return}
+  const gurl=document.getElementById('rlUrl').value.trim();
+  const gname=document.getElementById('rlName').value.trim();
+  if(!gurl||!gname){toast('Enter group URL and name','err');return}
+  if(!gurl.includes('roblox.com/groups/')){toast('Invalid group URL','err');return}
+  if(currentRound.bets&&currentRound.bets[ME.id]){toast('Already bet this round','err');return}
+  try{
+    await updateDoc(doc(db,'roulette_rounds',currentRound.id),{
+      [`bets.${ME.id}`]:{userId:ME.id,username:ME.username,color:selectedColor,groupName:gname,groupUrl:gurl}
+    });
+    toast('Bet placed on '+selectedColor.toUpperCase()+'!','ok');
+  }catch(e){toast('Failed: '+e.message,'err')}
+});
+
+async function ensureRouletteRound(){
+  try{
+    const existing=await getDocs(query(collection(db,'roulette_rounds'),where('status','==','betting'),limit(1)));
+    if(!existing.empty)return;
+    const last=await getDocs(query(collection(db,'roulette_rounds'),orderBy('roundNumber','desc'),limit(1)));
+    const lastNum=last.empty?0:last.docs[0].data().roundNumber||0;
+    await addDoc(collection(db,'roulette_rounds'),{roundNumber:lastNum+1,status:'betting',bets:{},result:null,createdAt:serverTimestamp()});
+  }catch(e){console.error('ensureRound:',e)}
+}
+
+async function spinRound(){
+  if(!currentRound||currentRound.status!=='betting')return;
+  const strip=document.getElementById('rstrip');
+  const px=40*56+Math.random()*40-20;
+  strip.style.transition='transform 5s cubic-bezier(0.25,0.1,0.1,1)';
+  strip.style.transform='translateX(-'+px+'px)';
+  const rand=new Uint8Array(1);crypto.getRandomValues(rand);
+  const rc=RLC[rand[0]%RLC.length];
+  const colorName={r:'red',b:'black',g:'green'}[rc];
+  const labels={r:'RED 🔴',b:'BLACK ⚫',g:'GREEN 🟢'};
+  setTimeout(async()=>{
+    toast('Result: '+labels[rc]+'!',rc==='g'?'ok':rc==='r'?'err':'info');
+    try{
+      await runTransaction(db,async t=>{
+        const rs=await t.get(doc(db,'roulette_rounds',currentRound.id));
+        const rd=rs.data();
+        t.update(doc(db,'roulette_rounds',currentRound.id),{status:'complete',result:colorName});
+        const bets=rd.bets||{};
+        Object.entries(bets).forEach(([uid,bet])=>{
+          if(bet.color===colorName)t.update(doc(db,'users',uid),{wins:increment(1)});
+          else t.update(doc(db,'users',uid),{losses:increment(1)});
+        });
+      });
+      if(ME){const s=await getDoc(doc(db,'users',ME.id));if(s.exists()){ME={id:ME.id,...s.data()};updateProfileUI();updateHomeStats()}}
+      setTimeout(()=>ensureRouletteRound(),3000);
+    }catch(e){console.error('spinRound:',e)}
+    strip.style.transition='none';strip.style.transform='translateX(0)';buildStrip();
+  },5500);
+}
+
+setInterval(()=>{
+  rlCountdown=Math.max(0,rlCountdown-1);
+  if(rlCountdown===0){rlCountdown=30;spinRound()}
+  const el=document.getElementById('rlTimer');
+  if(el)el.textContent='0:'+String(rlCountdown).padStart(2,'0');
+},1000);
+
+setInterval(buildStrip,30000);
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+async function loadAdminData(){
+  const usersSnap=await getDocs(collection(db,'users'));
+  const users=usersSnap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('aTotalUsers').textContent=users.length;
+  document.getElementById('adminUsers').innerHTML=users.map(u=>`
+    <div class="pitem">
+      <div class="pi"><div class="pin">${san(u.username||'?')}</div><div class="pid">${u.wins||0}W · ${u.losses||0}L · ${u.rank||'user'}</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn bo bsm" onclick="setRank('${u.id}','staff')" title="Staff">🛡️</button>
+        <button class="btn bo bsm" onclick="setRank('${u.id}','owner')" title="Owner">👑</button>
+        <button class="btn bred bsm" onclick="banUser('${u.id}','${san(u.username||'?')}')">Ban</button>
+      </div>
+    </div>`).join('');
+
+  const flipsSnap=await getDocs(query(collection(db,'flips'),where('status','in',['open','active'])));
+  document.getElementById('aActiveFlips').textContent=flipsSnap.size;
+  document.getElementById('adminFlips').innerHTML=flipsSnap.docs.map(d=>{const f=d.data();return`
+    <div class="pitem">
+      <div class="pi"><div class="pin">${san(f.creatorName||'?')} vs ${san(f.challengerName||'waiting')}</div><div class="pid">${f.status}</div></div>
+      <button class="btn bred bsm" onclick="cancelAdminFlip('${d.id}')">Cancel</button>
+    </div>`;}).join('');
+}
+
+window.setRank=async(uid,rank)=>{
+  if(ME?.rank!=='owner'&&rank==='owner'){toast('Only owners can assign owner rank','err');return}
+  await updateDoc(doc(db,'users',uid),{rank});
+  toast('Rank set to '+rank,'ok');loadAdminData();
+};
+window.banUser=async(uid,name)=>{
+  if(!confirm('Ban '+name+'?'))return;
+  await updateDoc(doc(db,'users',uid),{banned:true,online:false});
+  toast(name+' banned','ok');loadAdminData();
+};
+window.cancelAdminFlip=async id=>{
+  await updateDoc(doc(db,'flips',id),{status:'cancelled'});
+  toast('Flip cancelled','ok');loadAdminData();
+};
+
+</script>
+</body>
+</html>
