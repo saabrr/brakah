@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NY Moto Permit Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+–bg: #080808;
+–surface: #111;
+–surface2: #181818;
+–border: #1f1f1f;
+–yellow: #FFD600;
+–yellow-dim: #3a3000;
+–red: #FF3B3B;
+–green: #00E676;
+–blue: #4fc3f7;
+–text: #efefef;
+–muted: #555;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 28px 16px 60px;
+}
+
+/* –– HEADER –– */
+.header {
+width: 100%;
+max-width: 660px;
+margin-bottom: 28px;
+}
+.header-top {
+display: flex;
+align-items: flex-end;
+justify-content: space-between;
+margin-bottom: 4px;
+}
+.header h1 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: clamp(2.6rem, 9vw, 4rem);
+letter-spacing: 3px;
+color: var(–yellow);
+line-height: 1;
+}
+.manual-badge {
+font-size: 0.7rem;
+font-weight: 600;
+letter-spacing: 1px;
+color: var(–muted);
+text-transform: uppercase;
+padding-bottom: 6px;
+}
+.header p {
+font-size: 0.83rem;
+color: var(–muted);
+}
+
+/* –– PROGRESS –– */
+.progress-wrap {
+width: 100%;
+max-width: 660px;
+margin-bottom: 20px;
+}
+.prog-labels {
+display: flex;
+justify-content: space-between;
+font-size: 0.75rem;
+color: var(–muted);
+margin-bottom: 6px;
+}
+.progress-bar {
+height: 3px;
+background: var(–border);
+border-radius: 2px;
+overflow: hidden;
+}
+.progress-fill {
+height: 100%;
+background: var(–yellow);
+border-radius: 2px;
+transition: width 0.5s ease;
+}
+
+/* –– SCORE STRIP –– */
+.score-strip {
+width: 100%;
+max-width: 660px;
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+margin-bottom: 16px;
+}
+.chip {
+font-size: 0.75rem;
+font-weight: 600;
+padding: 4px 10px;
+border-radius: 20px;
+letter-spacing: 0.3px;
+}
+.chip.c { background: #001a0d; color: var(–green); border: 1px solid #004020; }
+.chip.w { background: #1a0000; color: var(–red); border: 1px solid #3a0000; }
+.chip.s { background: #1a1500; color: var(–yellow); border: 1px solid var(–yellow-dim); }
+.chip.m { background: #001020; color: var(–blue); border: 1px solid #002040; }
+
+/* –– AUTO-FAIL WARNING –– */
+.af-warn {
+width: 100%;
+max-width: 660px;
+background: #1a0000;
+border: 1px solid #4a0000;
+border-radius: 10px;
+padding: 12px 16px;
+font-size: 0.82rem;
+color: #ff9090;
+line-height: 1.5;
+margin-bottom: 14px;
+display: none;
+}
+
+/* –– CARD –– */
+.card {
+width: 100%;
+max-width: 660px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 28px 24px 24px;
+margin-bottom: 14px;
+animation: fadeSlide 0.25s ease;
+}
+@keyframes fadeSlide {
+from { opacity: 0; transform: translateY(8px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.q-meta {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 14px;
+}
+.q-counter { font-size: 0.72rem; color: var(–muted); letter-spacing: 0.5px; text-transform: uppercase; }
+.tag {
+font-size: 0.68rem;
+font-weight: 700;
+letter-spacing: 1px;
+text-transform: uppercase;
+padding: 3px 9px;
+border-radius: 4px;
+}
+.tag.sign { background: #1a1500; color: var(–yellow); border: 1px solid var(–yellow-dim); }
+.tag.moto { background: #001020; color: var(–blue); border: 1px solid #002545; }
+
+.q-text {
+font-size: 1.08rem;
+font-weight: 500;
+line-height: 1.55;
+margin-bottom: 22px;
+}
+
+.options { display: flex; flex-direction: column; gap: 9px; }
+
+.option {
+background: var(–surface2);
+border: 1.5px solid var(–border);
+border-radius: 10px;
+padding: 13px 16px;
+cursor: pointer;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 0.93rem;
+color: var(–text);
+text-align: left;
+transition: border-color 0.12s, background 0.12s;
+line-height: 1.45;
+position: relative;
+}
+.option:hover:not(:disabled) { border-color: var(–yellow); background: #1c1800; }
+.option.correct { border-color: var(–green) !important; background: #001a0d !important; color: var(–green); }
+.option.wrong { border-color: var(–red) !important; background: #150000 !important; color: var(–red); }
+.option.reveal { border-color: var(–green) !important; background: #001a0d !important; color: var(–green); }
+.option:disabled { cursor: default; }
+
+.explanation {
+margin-top: 18px;
+padding: 14px 16px;
+background: #0c0c0c;
+border-left: 3px solid var(–yellow);
+border-radius: 6px;
+font-size: 0.87rem;
+color: #ccc;
+line-height: 1.65;
+display: none;
+}
+.explanation.show { display: block; }
+.explanation .source {
+margin-top: 8px;
+font-size: 0.75rem;
+color: var(–muted);
+font-style: italic;
+}
+
+/* –– NEXT BTN –– */
+.next-btn {
+width: 100%;
+max-width: 660px;
+padding: 15px;
+background: var(–yellow);
+color: #000;
+border: none;
+border-radius: 10px;
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 1.25rem;
+letter-spacing: 2px;
+cursor: pointer;
+transition: opacity 0.15s;
+display: none;
+}
+.next-btn:hover { opacity: 0.85; }
+
+/* –– LOADING STATE –– */
+.loading-card {
+width: 100%;
+max-width: 660px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 40px 24px;
+text-align: center;
+display: none;
+}
+.spinner {
+width: 36px; height: 36px;
+border: 3px solid var(–border);
+border-top-color: var(–yellow);
+border-radius: 50%;
+animation: spin 0.7s linear infinite;
+margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-card p { color: var(–muted); font-size: 0.88rem; }
+.loading-card .loading-label { color: var(–yellow); font-family: ‘Bebas Neue’, sans-serif; font-size: 1.1rem; letter-spacing: 1px; margin-bottom: 6px; }
+
+/* –– RESULTS –– */
+.results {
+width: 100%;
+max-width: 660px;
+display: none;
+flex-direction: column;
+gap: 16px;
+}
+
+.result-hero {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 36px 24px;
+text-align: center;
+}
+.big-score {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 5.5rem;
+line-height: 1;
+margin-bottom: 8px;
+}
+.verdict { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+.sub-verdict { font-size: 0.85rem; color: var(–muted); max-width: 380px; margin: 0 auto; line-height: 1.5; }
+
+.breakdown {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 20px 24px;
+}
+.breakdown h3 {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 1.2rem;
+letter-spacing: 1px;
+color: var(–yellow);
+margin-bottom: 14px;
+}
+.bd-item {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+padding: 10px 0;
+border-bottom: 1px solid var(–border);
+gap: 12px;
+font-size: 0.86rem;
+}
+.bd-item:last-child { border-bottom: none; }
+.bd-label { color: #bbb; line-height: 1.5; flex: 1; }
+.bd-label .bd-type { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 2px; }
+.bd-label .bd-wrong { color: #ff8888; margin-top: 3px; }
+.bd-label .bd-right { color: #80ffb0; }
+.bd-icon { font-size: 1.1rem; flex-shrink: 0; padding-top: 2px; }
+
+.restart-btn {
+width: 100%;
+padding: 15px;
+background: var(–yellow);
+color: #000;
+border: none;
+border-radius: 10px;
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 1.25rem;
+letter-spacing: 2px;
+cursor: pointer;
+transition: opacity 0.15s;
+}
+.restart-btn:hover { opacity: 0.85; }
+
+.error-card {
+width: 100%;
+max-width: 660px;
+background: #1a0000;
+border: 1px solid #4a0000;
+border-radius: 12px;
+padding: 20px 24px;
+display: none;
+color: #ff8888;
+font-size: 0.9rem;
+line-height: 1.5;
+}
+.error-card button {
+margin-top: 12px;
+padding: 10px 20px;
+background: var(–red);
+color: #fff;
+border: none;
+border-radius: 8px;
+font-family: ‘DM Sans’, sans-serif;
+font-weight: 600;
+cursor: pointer;
+}
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>NY MOTO QUIZ</h1>
+    <div class="manual-badge">🤖 AI • Based on official DMV manual</div>
+  </div>
+  <p>Every test is different — questions generated fresh from the NY Motorcycle Operator's Manual</p>
+</div>
+
+<div id="main">
+  <div class="progress-wrap" id="prog-wrap" style="display:none">
+    <div class="prog-labels">
+      <span id="prog-label">Question 1 of 20</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+  </div>
+
+  <div class="score-strip" id="score-strip" style="display:none">
+    <div class="chip c">✓ Correct: <span id="sc-c">0</span></div>
+    <div class="chip w">✗ Wrong: <span id="sc-w">0</span></div>
+    <div class="chip s">🚧 Signs missed: <span id="sc-s">0</span>/4</div>
+    <div class="chip m">🏍 Moto missed: <span id="sc-m">0</span></div>
+  </div>
+
+  <div class="af-warn" id="af-warn"></div>
+
+  <div class="loading-card" id="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-label">Generating your questions...</div>
+    <p>AI is pulling fresh questions from the NY DMV Motorcycle Manual</p>
+  </div>
+
+  <div class="error-card" id="error-card">
+    <strong>Couldn't generate questions.</strong> Check your connection and try again.
+    <br><button onclick="startQuiz()">Retry</button>
+  </div>
+
+  <div class="card" id="q-card" style="display:none">
+    <div class="q-meta">
+      <div class="q-counter" id="q-counter">Question 1 of 20</div>
+      <div class="tag" id="q-tag">Sign</div>
+    </div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+<button class="next-btn" id="next-btn">NEXT →</button>
+
+  <div class="results" id="results">
+    <div class="result-hero">
+      <div class="big-score" id="res-score"></div>
+      <div class="verdict" id="res-verdict"></div>
+      <div class="sub-verdict" id="res-sub"></div>
+    </div>
+    <div class="breakdown">
+      <h3>REVIEW YOUR ANSWERS</h3>
+      <div id="bd-list"></div>
+    </div>
+    <button class="restart-btn" onclick="startQuiz()">NEW TEST → DIFFERENT QUESTIONS</button>
+  </div>
+</div>
+
+<script>
+// ─── MANUAL CONTENT CONTEXT ───────────────────────────────────────────────────
+const MANUAL_CONTEXT = `
+NY DMV MOTORCYCLE MANUAL KEY FACTS:
+
+LICENSES & REGISTRATION:
+- Must have Class M (motorcycle) or Class MJ (junior operator) license to ride in NY
+- Learner must be supervised by someone 21+, with valid motorcycle license, within 1/4 mile at all times
+- Motorcycles registered annually (not biannual), all registrations expire April 30
+- Motorcycles must be inspected every 12 months at a station with blue/orange or blue/gold sign
+- Motorcycles are NOT included in NY's no-fault insurance provisions
+- Liability insurance cannot be terminated without turn-in of license plate at DMV
+
+REQUIRED GEAR & EQUIPMENT:
+- ALL operators AND passengers must wear DOT-approved helmets (FMVSS 218) - no exceptions
+- Helmets should have at least 4 square inches of reflective material on both sides
+- Wear bright orange, red, yellow, or green jackets for visibility - body is half the visible surface
+- Motorcycle headlights come on automatically when engine runs (since 1978 models)
+- Motorcycles with headlight on during day are TWICE as likely to be noticed
+- Use HIGH beam during day to increase visibility; LOW beam at night and cloudy weather
+- A motorcycle must have: working brakes, horn, mirrors, headlight, tail/brake light, turn signals, proper tires
+
+BODY POSITION:
+- Sit far enough forward so arms are slightly bent holding handgrips
+- Start with right wrist flat to avoid accidentally using too much throttle
+- Keep knees against gas tank for balance during turns
+- Keep feet firmly on foot pegs, toes pointing forward (not down - could get caught)
+- Do NOT drag feet
+
+BRAKES:
+- Front brake provides at LEAST 3/4 (75%) or more (up to 70%+ stated elsewhere) of total stopping power
+- ALWAYS use BOTH brakes at same time for every stop
+- Squeeze front brake - never grab it; press down on rear brake
+- Locking rear brake on good traction straightaway: keep locked until fully stopped
+- If front wheel locks: IMMEDIATELY release then reapply
+- NEVER brake while swerving - brake BEFORE or AFTER, never during
+- If braking in a turn: straighten bike upright first if possible
+
+TURNS (4 steps - SLOW, LOOK, LEAN, ROLL):
+- SLOW: Reduce speed before the turn, close throttle, apply brakes
+- LOOK: Look through the turn to where you want to go; turn head not shoulders; keep eyes level
+- LEAN: Press handlegrip in direction of turn (press left = go left)
+- ROLL: Roll on throttle through turn to stabilize; maintain steady speed or accelerate gradually
+- Normal turns: rider and motorcycle lean together at same angle
+- Slow tight turns: lean motorcycle only, keep body straight
+- Higher speeds and tighter turns require more lean
+
+FOLLOWING DISTANCE:
+- Minimum 2-second following distance in normal conditions
+- 3-second or more if: pavement is slippery, can't see through vehicle ahead, heavy traffic
+- Use the "one-thousand-one, one-thousand-two" counting method with a fixed marker
+- Keep distance even when stopped (in case vehicle ahead backs up)
+- Ride in center portion of lane so driver ahead can see you in rearview mirror
+
+LANE POSITIONS (3 paths in each lane):
+- No single best position - choose based on visibility, hazards, space cushion
+- Path 1 (left), Path 2 (center), Path 3 (right)
+- Center oily strip is usually no more than 2 feet wide - usually safe when road is dry
+- Avoid big oil/grease buildups at busy intersections or toll booths
+- Ride in Path 2 or 3 if hazards on your left; Path 1 or 2 if hazards on your right
+- If hazards on both sides: Path 2 (center) is usually best
+- When being passed: stay in CENTER of lane (not edge away from passing vehicle)
+- Lane sharing with cars is NEVER safe; only 2 motorcycles can share a lane
+
+INTERSECTIONS:
+- Over HALF of motorcycle/car crashes happen at intersections
+- Most common danger: cars turning left in front of you
+- Never count on "eye contact" as guarantee a driver will yield
+- Cover clutch and both brakes approaching intersections to reduce reaction time
+- Approach blind intersections: move to portion that brings you into driver's field of vision earliest
+
+SEE STRATEGY (Search, Evaluate, Execute):
+- Search aggressively ahead, sides, and behind
+- Evaluate how hazards interact; anticipate problems
+- Execute: communicate with lights/horn, adjust speed, adjust position
+
+DANGEROUS SURFACES:
+- Cross railroad tracks at 90-degree angle (as close to perpendicular as possible)
+- Cross grooves and gratings at 45-degree angle when safe
+- On slippery surfaces: reduce speed, avoid sudden moves
+- When going over obstacles: approach at 90° angle, slow down, rise slightly off seat, roll on throttle slightly just before contact to lighten front end
+- Check tires and wheels after riding over objects
+
+SWERVING:
+- To swerve left: press left handgrip, then press right to recover
+- To swerve right: press right, then press left
+- Keep body upright, let motorcycle lean; knees against tank, feet on foot pegs
+- NEVER brake and swerve at same time
+
+CURVES:
+- Primary cause of single-vehicle crashes: running wide in curves
+- Start curve from outside, move to inside, exit to outside (if no traffic)
+- Or: stay in center of lane throughout curve
+
+NIGHT RIDING:
+- Open up 3-second or more following distance
+- Use high beam when not following or meeting a car
+- Wear reflective materials
+
+MECHANICAL PROBLEMS:
+- Stuck throttle: twist back and forth to free it; use engine cut-off switch; apply brakes
+- Tire failure: hold handgrips firmly, ease off throttle, avoid braking until speed drops
+- Wobble: DO NOT apply brakes; gradually close throttle; hold handgrips firmly; move weight forward
+
+PASSENGERS:
+- Passenger should get on AFTER engine is started
+- Passenger must have their own footrests and must keep feet on them at all times
+- Passenger should hold onto rider's waist, hips, or belt (not handlebars/signals)
+- With a passenger: need more distance to stop; accelerate more slowly; need more lean in turns
+
+GROUP RIDING:
+- Ride in staggered formation (not side-by-side, not single file)
+- Leader in left of lane; next rider in right portion; etc.
+- Maintain 2-second gap to bike directly ahead; 1-second gap to staggered position
+- Single file for curves, bad road conditions, turning
+
+ALCOHOL & THE LAW (NEW YORK):
+- BAC .08% or above = legally intoxicated (DWI); minimum 6-month license revocation
+- DWAI (Driving While Ability Impaired): BAC .05%-.07%; 90-day suspension
+- Zero Tolerance for under 21: BAC .02%-.07%; first violation = 6-month suspension; second = 1-year revocation or until 21
+- Chemical test refusal: minimum 1-year revocation
+- 40-45% of riders killed in crashes had used alcohol; only 1/3 were above legal limit
+- Even one drink can significantly affect performance
+- One 12oz beer = one mixed drink = one 5oz wine = one 12oz wine cooler (same alcohol amount)
+- Body eliminates alcohol at rate of about one drink per hour
+- Waiting one hour per drink does NOT guarantee skill is unaffected (side effects may remain)
+
+FATIGUE:
+- Never ride more than about 6 hours a day
+- Take rest breaks every 2 hours
+- Protect from wind, cold, rain - these cause faster fatigue
+
+ROAD SIGNS (for the 4 sign questions - 20% of test):
+- RED OCTAGON = STOP (always complete stop)
+- RED TRIANGLE pointing down = YIELD
+- YELLOW DIAMOND = warning (hazard/condition ahead)
+- ORANGE = construction/work zone
+- WHITE RECTANGLE = regulatory (speed limits, turn rules)
+- GREEN = directional/distance guidance
+- BLUE = motorist services (gas, food, lodging, hospital)
+- BROWN = recreational/cultural interest
+- PENNANT (triangle pointing right) = No Passing Zone
+- FLUORESCENT YELLOW-GREEN = pedestrian/bicycle/school warning
+- RR with X = railroad crossing advance warning
+- Signs warning about hazards: YELLOW with black lettering
+`;
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let questions = [];
+let current = 0;
+let correctCount = 0;
+let signsMissed = 0;
+let motoMissed = 0;
+let answered = false;
+let answers = [];
+
+// ─── QUIZ START ───────────────────────────────────────────────────────────────
+async function startQuiz() {
+  // Reset state
+  questions = []; current = 0; correctCount = 0;
+  signsMissed = 0; motoMissed = 0; answered = false; answers = [];
+
+  // UI reset
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('q-card').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('prog-wrap').style.display = 'none';
+  document.getElementById('score-strip').style.display = 'none';
+  document.getElementById('af-warn').style.display = 'none';
+  document.getElementById('error-card').style.display = 'none';
+  document.getElementById('loading-card').style.display = 'block';
+
+  try {
+    questions = await generateQuestions();
+    document.getElementById('loading-card').style.display = 'none';
+    document.getElementById('prog-wrap').style.display = 'block';
+    document.getElementById('score-strip').style.display = 'flex';
+    updateScoreStrip();
+    renderQuestion();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('loading-card').style.display = 'none';
+    document.getElementById('error-card').style.display = 'block';
+  }
+}
+
+// ─── GENERATE QUESTIONS VIA CLAUDE ───────────────────────────────────────────
+async function generateQuestions() {
+  const systemPrompt = `You are a NY DMV motorcycle permit test question generator. Generate exactly 20 multiple-choice questions based on the NY Motorcycle Operator's Manual content provided.
+
+STRICT RULES:
+- Generate exactly 4 road SIGN questions (type: "sign") and 16 motorcycle rule questions (type: "moto")
+- Each question must have exactly 4 answer options
+- One correct answer per question
+- Vary the topics — cover braking, turns, lane position, following distance, intersections, gear, alcohol/law, dangerous surfaces, passengers, night riding, mechanical problems, signs
+- Make questions feel like the real DMV test — practical and specific
+- correct_index is 0-3 (which option is correct)
+- explanation should be 1-2 sentences from the manual
+
+Return ONLY a valid JSON array, no markdown, no extra text. Format:
+[
+  {
+    "type": "sign",
+    "question": "...",
+    "options": ["A", "B", "C", "D"],
+    "correct_index": 0,
+    "explanation": "...",
+    "manual_topic": "Road Signs"
+  }
+]`;
+
+  const userPrompt = `Using this NY Motorcycle Manual content, generate 20 fresh, varied questions (4 sign + 16 moto). Mix up the topics and make the wrong answers plausible. Do NOT repeat questions from obvious patterns.
+
+MANUAL CONTENT:
+${MANUAL_CONTEXT}
+
+Generate 20 questions now. Return ONLY the JSON array.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }]
+    })
+  });
+
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json();
+
+  let raw = data.content.find(b => b.type === "text")?.text || "";
+  raw = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+  // Find JSON array
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+  if (start === -1 || end === -1) throw new Error("No JSON array in response");
+
+  const parsed = JSON.parse(raw.slice(start, end + 1));
+  if (!Array.isArray(parsed) || parsed.length < 10) throw new Error("Invalid questions array");
+
+  // Shuffle
+  return shuffleArray(parsed.slice(0, 20));
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── RENDER QUESTION ─────────────────────────────────────────────────────────
+function renderQuestion() {
+  answered = false;
+  const q = questions[current];
+  const total = questions.length;
+
+  // Progress
+  const pct = Math.round((current / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + "%";
+  document.getElementById('prog-label').textContent = `Question ${current + 1} of ${total}`;
+  document.getElementById('prog-pct').textContent = pct + "%";
+  document.getElementById('q-counter').textContent = `Question ${current + 1} of ${total}`;
+
+  // Type tag
+  const tag = document.getElementById('q-tag');
+  if (q.type === "sign") {
+    tag.textContent = "🚧 Road Sign";
+    tag.className = "tag sign";
+  } else {
+    tag.textContent = "🏍 Moto Rule";
+    tag.className = "tag moto";
+  }
+
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('explanation').textContent = "";
+  document.getElementById('explanation').classList.remove("show");
+  document.getElementById('next-btn').style.display = "none";
+
+  const optDiv = document.getElementById('options');
+  optDiv.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = "option";
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    optDiv.appendChild(btn);
+  });
+
+  document.getElementById('q-card').style.display = 'block';
+}
+
+// ─── SELECT ANSWER ────────────────────────────────────────────────────────────
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const wasCorrect = idx === q.correct_index;
+  const buttons = document.querySelectorAll('.option');
+
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct_index) btn.classList.add('reveal');
+    if (i === idx && !wasCorrect) btn.classList.add('wrong');
+  });
+
+  if (wasCorrect) {
+    correctCount++;
+    buttons[idx].classList.remove('reveal');
+    buttons[idx].classList.add('correct');
+  } else {
+    if (q.type === "sign") signsMissed++;
+    else motoMissed++;
+  }
+
+  answers.push({
+    type: q.type,
+    question: q.question,
+    chosen: q.options[idx],
+    correct: q.options[q.correct_index],
+    wasCorrect,
+    explanation: q.explanation,
+    topic: q.manual_topic || ""
+  });
+
+  // Show explanation
+  const expDiv = document.getElementById('explanation');
+  expDiv.innerHTML = `${q.explanation}${q.manual_topic ? `<div class="source">📖 Manual section: ${q.manual_topic}</div>` : ""}`;
+  expDiv.classList.add("show");
+
+  updateScoreStrip();
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = current + 1 < questions.length ? "NEXT QUESTION →" : "SEE RESULTS →";
+}
+
+// ─── SCORE STRIP ─────────────────────────────────────────────────────────────
+function updateScoreStrip() {
+  document.getElementById('sc-c').textContent = correctCount;
+  document.getElementById('sc-w').textContent = answers.filter(a => !a.wasCorrect).length;
+  document.getElementById('sc-s').textContent = signsMissed;
+  document.getElementById('sc-m').textContent = motoMissed;
+
+  const afBox = document.getElementById('af-warn');
+  const warnings = [];
+  if (signsMissed >= 2) warnings.push("⚠️ <strong>AUTO-FAIL:</strong> You've missed 2+ road sign questions. On the real test this is an automatic fail.");
+  if (motoMissed >= 7) warnings.push("⚠️ <strong>Danger zone:</strong> Missed 7 moto questions — you need to miss fewer than 7 total to pass.");
+  if (warnings.length) {
+    afBox.innerHTML = warnings.join("<br>");
+    afBox.style.display = "block";
+  } else {
+    afBox.style.display = "none";
+  }
+}
+
+// ─── NEXT BUTTON ─────────────────────────────────────────────────────────────
+document.getElementById('next-btn').onclick = () => {
+  current++;
+  if (current >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+};
+
+// ─── RESULTS ─────────────────────────────────────────────────────────────────
+function showResults() {
+  document.getElementById('q-card').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('prog-fill').style.width = "100%";
+  document.getElementById('prog-pct').textContent = "100%";
+
+  const res = document.getElementById('results');
+  res.style.display = 'flex';
+
+  const total = questions.length;
+  const autoFail = signsMissed >= 2;
+  const passed = correctCount >= 14 && !autoFail;
+
+  const scoreEl = document.getElementById('res-score');
+  scoreEl.textContent = `${correctCount}/${total}`;
+  scoreEl.style.color = passed ? "var(--green)" : "var(--red)";
+
+  document.getElementById('res-verdict').textContent = passed ? "✅ YOU PASSED" : "❌ NOT YET";
+
+  let subText = "";
+  if (autoFail) {
+    subText = `Auto-fail: missed ${signsMissed} road sign question${signsMissed > 1 ? "s" : ""}. You need to get at least 3 of 4 sign questions right.`;
+  } else if (passed) {
+    subText = `${Math.round((correctCount/total)*100)}% — You cleared the 14/20 passing mark! ${signsMissed === 0 ? "Perfect on road signs too! 🔥" : `Signs missed: ${signsMissed}/4`}`;
+  } else {
+    const needed = 14 - correctCount;
+    subText = `You got ${correctCount}/20. You need ${needed} more correct to pass. Read every explanation carefully, then retry.`;
+  }
+  document.getElementById('res-sub').textContent = subText;
+
+  const bdList = document.getElementById('bd-list');
+  bdList.innerHTML = "";
+  answers.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'bd-item';
+    const typeColor = a.type === 'sign' ? 'color:var(--yellow)' : 'color:var(--blue)';
+    const wrongHtml = !a.wasCorrect ? `<div class="bd-wrong">You said: "${a.chosen}"</div><div class="bd-right">Correct: "${a.correct}"</div>` : "";
+    div.innerHTML = `
+      <div class="bd-label">
+        <div class="bd-type" style="${typeColor}">${a.type === 'sign' ? '🚧 Road Sign' : '🏍 Moto Rule'}${a.topic ? ' — ' + a.topic : ''}</div>
+        ${a.question}
+        ${wrongHtml}
+      </div>
+      <div class="bd-icon">${a.wasCorrect ? '✅' : '❌'}</div>
+    `;
+    bdList.appendChild(div);
+  });
+}
+
+// ─── KICK OFF ─────────────────────────────────────────────────────────────────
+startQuiz();
+</script>
+
+</body>
+</html>
